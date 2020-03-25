@@ -1,10 +1,6 @@
-import matplotlib
 import numpy as np
 import CoolProp as CP
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import scipy.interpolate
-from matplotlib.patches import Rectangle
 
 
 def beautiful_unit_string(unit):
