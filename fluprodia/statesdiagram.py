@@ -38,9 +38,6 @@ class StatesDiagram:
         self.set_diagram_layout(width, height)
         self.set_unit_system()
 
-        self.fig, self.ax = plt.subplots(figsize=(self.width, self.height))
-        self.get_ax_size()
-
         self.pressure = {'isolines': np.array([])}
         self.entropy = {'isolines': np.array([])}
         self.temperature = {'isolines': np.array([])}
@@ -56,6 +53,48 @@ class StatesDiagram:
 
         self.set_isoline_defaults()
         self.set_limits()
+        self.default_line_layout()
+        self.default_label_positioning()
+
+    def default_line_layout(self):
+        self.pressure['style'] = {
+            'linestyle': '-.',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+        self.volume['style'] = {
+            'linestyle': 'dotted',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+        self.quality['style'] = {
+            'linestyle': '-',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+        self.entropy['style'] = {
+            'linestyle': 'dashdotdotted',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+        self.enthalpy['style'] = {
+            'linestyle': '--',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+        self.temperature['style'] = {
+            'linestyle': '--',
+            'color': '#363636',
+            'linewidth': 0.5
+        }
+
+    def default_label_positioning(self):
+        self.pressure['label_position'] = 0.85
+        self.volume['label_position'] = 0.7
+        self.quality['label_position'] = 0.225
+        self.entropy['label_position'] = 0.95
+        self.enthalpy['label_position'] = 0.85
+        self.temperature['label_position'] = 0.95
 
     def set_isolines(self, **kwargs):
         keys = ['p', 'T', 'Q', 's', 'h', 'v']
@@ -64,8 +103,10 @@ class StatesDiagram:
                 obj = getattr(self, self.properties[key])
                 if key == 'T':
                     obj['isolines'] = kwargs[key] + self.converters[key][self.units[key]]
+                    obj['isolines'].round(5)
                 else:
                     obj['isolines'] = kwargs[key] * self.converters[key][self.units[key]]
+                    obj['isolines'].round(5)
             else:
                 msg = (
                     'The specified isoline \'' + key + '\' is not available. '
@@ -104,6 +145,9 @@ class StatesDiagram:
         self.width = width
         self.height = height
 
+        self.fig = plt.figure(figsize=(self.width, self.height))
+        self.ax = self.fig.add_subplot()
+
     def set_unit_system(self, p_unit='Pa', T_unit='K', s_unit='J/kgK', h_unit='J/kg', v_unit='m^3/kg', Q_unit='%'):
         self.units['p'] = p_unit
         self.units['T'] = T_unit
@@ -126,16 +170,22 @@ class StatesDiagram:
         if idx > len(x):
             return
 
-        alpha = np.arctan(
-            (y[idx] - y[idx - 1]) * (self.height / (self.y_max - self.y_min)) /
-            ((x[idx] - x[idx - 1]) * (self.width / (self.x_max - self.x_min)))
-        ) / (2 * np.pi) * 360
+        if x[idx] - x[idx - 1] == 0:
+            if y[idx] > y[idx - 1]:
+                alpha = 90
+            else:
+                alpha = -90
+        else:
+            alpha = np.arctan(
+                (y[idx] - y[idx - 1]) * (self.height / (self.y_max - self.y_min)) /
+                ((x[idx] - x[idx - 1]) * (self.width / (self.x_max - self.x_min)))
+            ) / (2 * np.pi) * 360
 
         unit = beautiful_unit_string(self.units[property])
 
         txt = str(isoline) + ' ' + unit
         self.ax.text(
-            x[idx], y[idx], txt, fontsize=4,
+            x[idx], y[idx], txt, fontsize=5,
             rotation=alpha, va='center', ha='center',
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
 
@@ -243,6 +293,7 @@ class StatesDiagram:
             np.linspace(self.T_crit * 0.97, self.T_crit, 40))
 
         for Q in isolines:
+            Q = round(Q, 3)
             self.quality[Q] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
@@ -392,9 +443,8 @@ class StatesDiagram:
             self.entropy[s]['h'] = np.array(self.entropy[s]['h'])
 
     def draw_isolines(self, isolines, diagram_type=None):
-        if diagram_type not in self.supported_diagrams:
-            msg = 'This diagram is not supported.'
-            raise ValueError(msg)
+        self.ax.clear()
+        self.get_ax_size()
 
         x_property = diagram_type[1]
         y_property = diagram_type[0]
@@ -436,12 +486,11 @@ class StatesDiagram:
                     y = y[indices]
                     x = x[indices]
 
-                    self.ax.plot(
-                        x, y,
-                        linestyle='-.', color='#363636', linewidth=0.5)
-                    idx = 20
+                    self.ax.plot(x, y, **data['style'])
                     if isoline == 'T':
                         isoval -= isoline_conv
                     else:
                         isoval /= isoline_conv
-                    self.draw_isoline_label(isoval, isoline, idx, x, y)
+                    self.draw_isoline_label(
+                        round(isoval, 3), isoline,
+                        int(data['label_position'] * len(x)), x, y)
