@@ -6,7 +6,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-setup(name='TESPy.plotting',
+setup(name='fluprodia',
       version='0.0.1 dev',
       description='TESPy fluid property plotting',
       url='http://github.com/fwitte/tespy.plotting',
