@@ -1,0 +1,27 @@
+language: python
+
+matrix:
+  include:
+    - name: "python 3.6 on xenial Linux"
+      python: 3.6
+      dist: xenial
+    - name: "python 3.7 on xenial Linux"
+      python: 3.7
+      dist: xenial
+#    - name: "Python 3.7.3 on Windows"
+#      os: windows
+#      language: shell
+#      before_install: choco install python3
+#      env: PATH=/c/Python37:/c/Python37/Scripts:$PATH
+
+install:
+  - pip install .
+  - pip install pytest-cov
+  - pip install coveralls
+
+# command to run tests
+script:
+  - python -m pytest ./fluprodia --doctest-modules ./tests --cov=fluprodia
+
+after_success:
+  - coveralls
