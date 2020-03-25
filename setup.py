@@ -15,7 +15,7 @@ setup(name='fluprodia',
       long_description=read('README.rst'),
       license='MIT',
       packages=[],
-      python_requires='>=3', '<3.8',
+      python_requires='>=3,<3.8',
       install_requires=['CoolProp>=6,<7',
                         'numpy>=1.13.3,<2',
                         'matplotlib>=3.2,<4'])
