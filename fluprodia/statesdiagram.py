@@ -12,40 +12,6 @@ def beautiful_unit_string(unit):
     return unit
 
 
-def IF97_Dmass(
-    rhotarget, state, inputfix,
-    inputfix_value, inputvar, inputvar_value, val_min, val_max):
-    iter = 0
-    inputvar_value = max(min(inputvar_value, val_max * 0.999), val_min * 1.001)
-    while True:
-        inputpair = CP.CoolProp.generate_update_pair(
-            inputfix, inputfix_value, inputvar, inputvar_value)
-        state.update(*inputpair)
-        residual = rhotarget - state.rhomass()
-
-        d = 0.01
-        inputpair = CP.CoolProp.generate_update_pair(
-            inputfix, inputfix_value, inputvar, inputvar_value + d)
-        state.update(*inputpair)
-        rho1 = state.rhomass()
-        inputpair = CP.CoolProp.generate_update_pair(
-            inputfix, inputfix_value, inputvar, inputvar_value - d)
-        state.update(*inputpair)
-        rho2 = state.rhomass()
-
-        derivative = -(rho1 - rho2) / (2 * d)
-
-        inputvar_value -= residual / derivative
-        inputvar_value = max(min(inputvar_value, val_max * 0.999), val_min * 1.001)
-
-        if abs(residual) < 1e-10:
-            return inputvar_value
-        elif iter > 10:
-            return np.nan
-        else:
-            iter += 1
-
-
 class StatesDiagram:
 
     def __init__(self, fluid, backend='HEOS', width=16, height=10):
