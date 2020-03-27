@@ -33,7 +33,26 @@ class StatesDiagram:
             's': 'entropy',
             'Q': 'quality'}
         self.units = {}
-        self.supported_diagrams = ['Ts', 'hs', 'ph', 'pv']
+        self.supported_diagrams = {
+            'Ts': {
+                'x_property': 's',
+                'y_property': 'T',
+                'x_scale': 'lin',
+                'y_scale': 'lin'
+            },
+            'hs': {
+                'x_property': 's',
+                'y_property': 'h',
+                'x_scale': 'lin',
+                'y_scale': 'lin'
+            },
+            'logph': {
+                'x_property': 'h',
+                'y_property': 'p',
+                'x_scale': 'lin',
+                'y_scale': 'log'
+            }
+        }
 
         self.set_diagram_layout(width, height)
         self.set_unit_system()
@@ -44,12 +63,6 @@ class StatesDiagram:
         self.enthalpy = {'isolines': np.array([])}
         self.volume = {'isolines': np.array([])}
         self.quality = {'isolines': np.array([])}
-
-        p_min = self.state.trivial_keyed_output(CP.iP_min)
-        T_max = self.state.trivial_keyed_output(CP.iT_max)
-        self.state.update(CP.PT_INPUTS, p_min, T_max)
-        s_max = self.state.smass()
-        self.iterator = np.linspace(0, s_max, 100)
 
         self.set_isoline_defaults()
         self.set_limits()
@@ -102,11 +115,12 @@ class StatesDiagram:
             if key in keys:
                 obj = getattr(self, self.properties[key])
                 if key == 'T':
-                    obj['isolines'] = kwargs[key] + self.converters[key][self.units[key]]
-                    obj['isolines'].round(5)
+                    obj['isolines'] = (
+                        kwargs[key] + self.converters[key][self.units[key]])
                 else:
-                    obj['isolines'] = kwargs[key] * self.converters[key][self.units[key]]
-                    obj['isolines'].round(5)
+                    obj['isolines'] = (
+                        kwargs[key] * self.converters[key][self.units[key]])
+                obj['isolines'] = obj['isolines'].round(8)
             else:
                 msg = (
                     'The specified isoline \'' + key + '\' is not available. '
@@ -121,6 +135,7 @@ class StatesDiagram:
         self.state.update(CP.PT_INPUTS, self.p_trip, self.T_max)
         self.v_max = 1 / self.state.rhomass()
         self.s_max = self.state.smass()
+        self.iterator = np.linspace(0, self.s_max, 100)
         self.state.update(CP.PT_INPUTS, self.p_max, self.T_trip)
         self.v_min = 1 / self.state.rhomass()
 
@@ -128,12 +143,14 @@ class StatesDiagram:
         self.T_crit = self.state.trivial_keyed_output(CP.iT_critical)
         self.v_crit = 1 / self.state.trivial_keyed_output(CP.irhomass_critical)
 
-        self.pressure['isolines'] = np.geomspace(self.p_trip, self.p_max, 11)
-        self.temperature['isolines'] = np.linspace(self.T_trip, self.T_max, 11)
-        self.quality['isolines'] = np.linspace(0, 1, 11).round(1)
-        self.entropy['isolines'] = np.linspace(0, self.s_max, 11)
-        self.enthalpy = {'isolines': np.array([])}
-        self.volume = {'isolines': np.geomspace(self.v_min, self.v_max, 11)}
+        self.pressure['isolines'] = np.geomspace(
+            self.p_trip, self.p_max, 11).round(8)
+        self.temperature['isolines'] = np.linspace(
+            self.T_trip, self.T_max, 11).round(8)
+        self.quality['isolines'] = np.linspace(0, 1, 11).round(8)
+        self.entropy['isolines'] = np.linspace(0, self.s_max, 11).round(8)
+        self.volume['isolines'] = np.geomspace(
+            self.v_min, self.v_max, 11).round(8)
 
     def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
         self.x_min = x_min
@@ -144,7 +161,6 @@ class StatesDiagram:
     def set_diagram_layout(self, width, height):
         self.width = width
         self.height = height
-
         self.fig = plt.figure(figsize=(self.width, self.height))
         self.ax = self.fig.add_subplot()
 
@@ -177,8 +193,10 @@ class StatesDiagram:
                 alpha = -90
         else:
             alpha = np.arctan(
-                (y[idx] - y[idx - 1]) * (self.height / (self.y_max - self.y_min)) /
-                ((x[idx] - x[idx - 1]) * (self.width / (self.x_max - self.x_min)))
+                (y[idx] - y[idx - 1]) * (
+                    self.height / (self.y_max - self.y_min)) /
+                ((x[idx] - x[idx - 1]) * (
+                    self.width / (self.x_max - self.x_min)))
             ) / (2 * np.pi) * 360
 
         unit = beautiful_unit_string(self.units[property])
@@ -196,13 +214,10 @@ class StatesDiagram:
         self.width *= self.fig.dpi
         self.height *= self.fig.dpi
 
-    def isobar(self, isolines=None):
-        if isolines is None:
-            isolines = self.pressure['isolines']
-        else:
-            self.pressure['isolines'] = isolines
+    def isobar(self):
+        isolines = self.pressure['isolines']
 
-        for p in isolines:
+        for p in isolines.round(8):
             self.pressure[p] = {'h': [], 'T': [], 'v': [], 's': [], 'p': []}
             for val in self.iterator:
                 try:
@@ -215,11 +230,11 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.pressure[p]['h'] = np.array(self.pressure[p]['h'])
-            self.pressure[p]['T'] = np.array(self.pressure[p]['T'])
-            self.pressure[p]['v'] = np.array(self.pressure[p]['v'])
-            self.pressure[p]['s'] = np.array(self.pressure[p]['s'])
-            self.pressure[p]['p'] = np.array(self.pressure[p]['p'])
+            self.pressure[p]['h'] = np.asarray(self.pressure[p]['h'])
+            self.pressure[p]['T'] = np.asarray(self.pressure[p]['T'])
+            self.pressure[p]['v'] = np.asarray(self.pressure[p]['v'])
+            self.pressure[p]['s'] = np.asarray(self.pressure[p]['s'])
+            self.pressure[p]['p'] = np.asarray(self.pressure[p]['p'])
 
             if p <= self.p_crit:
                 for Q in [0, 1]:
@@ -238,13 +253,10 @@ class StatesDiagram:
                     self.pressure[p]['p'] = np.insert(
                         self.pressure[p]['p'], idx, s)
 
-    def isochor(self, isolines=None):
-        if isolines is None:
-            isolines = self.volume['isolines']
-        else:
-            self.volume['isolines'] = isolines
+    def isochor(self):
+        isolines = self.volume['isolines']
 
-        for v in isolines:
+        for v in isolines.round(8):
             self.volume[v] = {'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in self.iterator:
                 try:
@@ -257,11 +269,11 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.volume[v]['h'] = np.array(self.volume[v]['h'])
-            self.volume[v]['T'] = np.array(self.volume[v]['T'])
-            self.volume[v]['p'] = np.array(self.volume[v]['p'])
-            self.volume[v]['s'] = np.array(self.volume[v]['s'])
-            self.volume[v]['v'] = np.array(self.volume[v]['v'])
+            self.volume[v]['h'] = np.asarray(self.volume[v]['h'])
+            self.volume[v]['T'] = np.asarray(self.volume[v]['T'])
+            self.volume[v]['p'] = np.asarray(self.volume[v]['p'])
+            self.volume[v]['s'] = np.asarray(self.volume[v]['s'])
+            self.volume[v]['v'] = np.asarray(self.volume[v]['v'])
 
             if v >= self.v_crit:
                 try:
@@ -282,18 +294,14 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-    def isoquality(self, isolines=None):
-        if isolines is None:
-            isolines = self.quality['isolines']
-        else:
-            self.quality['isolines'] = isolines
+    def isoquality(self):
+        isolines = self.quality['isolines']
 
         iterator = np.append(
             np.linspace(self.T_trip, self.T_crit * 0.97, 40, endpoint=False),
             np.linspace(self.T_crit * 0.97, self.T_crit, 40))
 
-        for Q in isolines:
-            Q = round(Q, 3)
+        for Q in isolines.round(8):
             self.quality[Q] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
@@ -307,23 +315,20 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.quality[Q]['h'] = np.array(self.quality[Q]['h'])
-            self.quality[Q]['p'] = np.array(self.quality[Q]['p'])
-            self.quality[Q]['v'] = np.array(self.quality[Q]['v'])
-            self.quality[Q]['s'] = np.array(self.quality[Q]['s'])
-            self.quality[Q]['T'] = np.array(self.quality[Q]['T'])
+            self.quality[Q]['h'] = np.asarray(self.quality[Q]['h'])
+            self.quality[Q]['p'] = np.asarray(self.quality[Q]['p'])
+            self.quality[Q]['v'] = np.asarray(self.quality[Q]['v'])
+            self.quality[Q]['s'] = np.asarray(self.quality[Q]['s'])
+            self.quality[Q]['T'] = np.asarray(self.quality[Q]['T'])
 
-    def isoenthalpy(self, isolines=None):
-        if isolines is None:
-            isolines = self.enthalpy['isolines']
-        else:
-            self.enthalpy['isolines'] = isolines
+    def isoenthalpy(self):
+        isolines = self.enthalpy['isolines']
 
         iterator = np.geomspace(
             self.pressure['isolines'].min(),
             self.pressure['isolines'].max(), 100)
 
-        for h in isolines:
+        for h in isolines.round(8):
             self.enthalpy[h] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
@@ -337,11 +342,11 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.enthalpy[h]['T'] = np.array(self.enthalpy[h]['T'])
-            self.enthalpy[h]['p'] = np.array(self.enthalpy[h]['p'])
-            self.enthalpy[h]['v'] = np.array(self.enthalpy[h]['v'])
-            self.enthalpy[h]['s'] = np.array(self.enthalpy[h]['s'])
-            self.enthalpy[h]['h'] = np.array(self.enthalpy[h]['h'])
+            self.enthalpy[h]['T'] = np.asarray(self.enthalpy[h]['T'])
+            self.enthalpy[h]['p'] = np.asarray(self.enthalpy[h]['p'])
+            self.enthalpy[h]['v'] = np.asarray(self.enthalpy[h]['v'])
+            self.enthalpy[h]['s'] = np.asarray(self.enthalpy[h]['s'])
+            self.enthalpy[h]['h'] = np.asarray(self.enthalpy[h]['h'])
 
             for Q in [0, 1]:
                 try:
@@ -362,17 +367,14 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-    def isotherm(self, isolines=None):
-        if isolines is None:
-            isolines = self.temperature['isolines']
-        else:
-            self.temperature['isolines'] = isolines
+    def isotherm(self):
+        isolines = self.temperature['isolines']
 
         iterator = np.geomspace(
             self.volume['isolines'].min(),
             self.volume['isolines'].max(), 150)
 
-        for T in isolines:
+        for T in isolines.round(8):
             self.temperature[T] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
@@ -386,11 +388,11 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.temperature[T]['T'] = np.array(self.temperature[T]['T'])
-            self.temperature[T]['p'] = np.array(self.temperature[T]['p'])
-            self.temperature[T]['v'] = np.array(self.temperature[T]['v'])
-            self.temperature[T]['s'] = np.array(self.temperature[T]['s'])
-            self.temperature[T]['h'] = np.array(self.temperature[T]['h'])
+            self.temperature[T]['T'] = np.asarray(self.temperature[T]['T'])
+            self.temperature[T]['p'] = np.asarray(self.temperature[T]['p'])
+            self.temperature[T]['v'] = np.asarray(self.temperature[T]['v'])
+            self.temperature[T]['s'] = np.asarray(self.temperature[T]['s'])
+            self.temperature[T]['h'] = np.asarray(self.temperature[T]['h'])
 
             if T <= self.T_crit:
                 for Q in [0, 1]:
@@ -408,21 +410,19 @@ class StatesDiagram:
                         self.temperature[T]['s'] = np.insert(
                             self.temperature[T]['s'], idx, s)
                         self.temperature[T]['v'] = np.insert(
-                            self.temperature[T]['v'], idx, 1 / self.state.rhomass())
+                            self.temperature[T]['v'], idx,
+                            1 / self.state.rhomass())
                     except ValueError:
                         continue
 
-    def isoentropy(self, isolines=None):
-        if isolines is None:
-            isolines = self.entropy['isolines']
-        else:
-            self.entropy['isolines'] = isolines
+    def isoentropy(self):
+        isolines = self.entropy['isolines']
 
         iterator = np.linspace(
             self.temperature['isolines'].min(),
             self.temperature['isolines'].max(), 100)
 
-        for s in isolines:
+        for s in isolines.round(8):
             self.entropy[s] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
@@ -436,21 +436,50 @@ class StatesDiagram:
                 except ValueError:
                     continue
 
-            self.entropy[s]['T'] = np.array(self.entropy[s]['T'])
-            self.entropy[s]['p'] = np.array(self.entropy[s]['p'])
-            self.entropy[s]['v'] = np.array(self.entropy[s]['v'])
-            self.entropy[s]['s'] = np.array(self.entropy[s]['s'])
-            self.entropy[s]['h'] = np.array(self.entropy[s]['h'])
+            self.entropy[s]['T'] = np.asarray(self.entropy[s]['T'])
+            self.entropy[s]['p'] = np.asarray(self.entropy[s]['p'])
+            self.entropy[s]['v'] = np.asarray(self.entropy[s]['v'])
+            self.entropy[s]['s'] = np.asarray(self.entropy[s]['s'])
+            self.entropy[s]['h'] = np.asarray(self.entropy[s]['h'])
 
-    def draw_isolines(self, isolines, diagram_type=None):
+    def draw_isolines(self, diagram_type, isoline_data=None):
+
+        if not isinstance(diagram_type, str):
+            msg = (
+                'The diagram_type must be specified as string. Available '
+                'inputs are: ' + str(self.supported_diagrams.keys()) + '.')
+            raise TypeError(msg)
+        elif diagram_type not in self.supported_diagrams.keys():
+            msg = (
+                'The specified diagram_type is not available. Available '
+                'inputs are: ' + str(self.supported_diagrams.keys()) + '.')
+            raise ValueError(msg)
+
         self.ax.clear()
         self.get_ax_size()
 
-        x_property = diagram_type[1]
-        y_property = diagram_type[0]
+        x_property = self.supported_diagrams[diagram_type]['x_property']
+        y_property = self.supported_diagrams[diagram_type]['y_property']
+        x_scale = self.supported_diagrams[diagram_type]['x_scale']
+        y_scale = self.supported_diagrams[diagram_type]['y_scale']
 
-        self.x_label = x_property + ' in ' + beautiful_unit_string(self.units[x_property])
-        self.y_label = y_property + ' in ' + beautiful_unit_string(self.units[y_property])
+        self.x_label = (
+            x_property + ' in ' +
+            beautiful_unit_string(self.units[x_property]))
+        self.y_label = (
+            y_property + ' in ' +
+            beautiful_unit_string(self.units[y_property]))
+
+        if isoline_data is None:
+            isolines = [
+                x for x in self.properties.keys()
+                if x not in [x_property, y_property]
+            ]
+        elif not isinstance(isoline_data, dict):
+            msg = ('The keyword isolines must either be a dictionary or None.')
+            raise TypeError(msg)
+        else:
+            isolines = isoline_data.keys()
 
         for isoline in isolines:
 
@@ -461,7 +490,28 @@ class StatesDiagram:
             x_conv = self.converters[x_property][self.units[x_property]]
             y_conv = self.converters[y_property][self.units[y_property]]
 
-            for isoval in data['isolines']:
+            isovalues = data['isolines']
+
+            if isoline_data is not None:
+                if 'style' in isoline_data[isoline].keys():
+                    data['style'].update(isoline_data[isoline]['style'])
+
+                if 'values' in isoline_data[isoline].keys():
+                    if isoline == 'T':
+                        isovalues = (
+                            isoline_data[isoline]['values'] - isoline_conv)
+                    else:
+                        isovalues = (
+                            isoline_data[isoline]['values'] * isoline_conv)
+
+            for isoval in isovalues.round(8):
+                if isoval not in data.keys():
+                    msg = (
+                        'Could not find data for ' + property + ' isoline '
+                        'with value: ' + str(isoval) + '.')
+                    print(msg)
+                    continue
+
                 if x_property == 'T':
                     x = data[isoval][x_property] - x_conv
                 else:
@@ -478,10 +528,12 @@ class StatesDiagram:
                 )
 
                 if len(indices) > 0:
-                    gaps = np.where(np.diff(indices) > 1)[0]
-                    if len(gaps) > 0:
-                        indices = np.insert(indices, gaps + 1, indices[gaps] + 1)
-                        indices = np.insert(indices, gaps + 2, indices[gaps + 2] - 1)
+                    gap = np.where(np.diff(indices) > 1)[0]
+                    if len(gap) > 0:
+                        indices = np.insert(
+                            indices, gap + 1, indices[gap] + 1)
+                        indices = np.insert(
+                            indices, gap + 2, indices[gap + 2] - 1)
 
                     if indices[0] != 0:
                         indices = np.insert(indices, 0, indices[0] - 1)
@@ -497,5 +549,5 @@ class StatesDiagram:
                     else:
                         isoval /= isoline_conv
                     self.draw_isoline_label(
-                        round(isoval, 3), isoline,
+                        isoval.round(8), isoline,
                         int(data['label_position'] * len(x)), x, y)
