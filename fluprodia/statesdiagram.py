@@ -478,6 +478,11 @@ class StatesDiagram:
                 )
 
                 if len(indices) > 0:
+                    gaps = np.where(np.diff(indices) > 1)[0]
+                    if len(gaps) > 0:
+                        indices = np.insert(indices, gaps + 1, indices[gaps] + 1)
+                        indices = np.insert(indices, gaps + 2, indices[gaps + 2] - 1)
+
                     if indices[0] != 0:
                         indices = np.insert(indices, 0, indices[0] - 1)
                     if indices[-1] < len(x) - 1:
