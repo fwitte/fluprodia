@@ -37,19 +37,19 @@ class StatesDiagram:
             'Ts': {
                 'x_property': 's',
                 'y_property': 'T',
-                'x_scale': 'lin',
-                'y_scale': 'lin'
+                'x_scale': 'linear',
+                'y_scale': 'linear'
             },
             'hs': {
                 'x_property': 's',
                 'y_property': 'h',
-                'x_scale': 'lin',
-                'y_scale': 'lin'
+                'x_scale': 'linear',
+                'y_scale': 'linear'
             },
             'logph': {
                 'x_property': 'h',
                 'y_property': 'p',
-                'x_scale': 'lin',
+                'x_scale': 'linear',
                 'y_scale': 'log'
             }
         }
@@ -86,8 +86,8 @@ class StatesDiagram:
             'linewidth': 0.5
         }
         self.entropy['style'] = {
-            'linestyle': 'dashdotdotted',
-            'color': '#363636',
+            'linestyle': 'solid',
+            'color': '#d1d1d1',
             'linewidth': 0.5
         }
         self.enthalpy['style'] = {
@@ -191,13 +191,24 @@ class StatesDiagram:
                 alpha = 90
             else:
                 alpha = -90
+        elif y[idx] - y[idx - 1] == 0:
+            alpha = 0
         else:
-            alpha = np.arctan(
-                (y[idx] - y[idx - 1]) * (
-                    self.height / (self.y_max - self.y_min)) /
-                ((x[idx] - x[idx - 1]) * (
-                    self.width / (self.x_max - self.x_min)))
-            ) / (2 * np.pi) * 360
+            if self.ax.get_xscale() == 'log':
+                x_scaled = (np.log(x[idx]) - np.log(x[idx - 1])) * (
+                    self.width / (np.log(self.x_max) - np.log(self.x_min)))
+            else:
+                x_scaled = (x[idx] - x[idx - 1]) * (
+                    self.width / (self.x_max - self.x_min))
+
+            if self.ax.get_yscale() == 'log':
+                y_scaled = (np.log(y[idx]) - np.log(y[idx - 1])) * (
+                    self.height / (np.log(self.y_max) - np.log(self.y_min)))
+            else:
+                y_scaled = (y[idx] - y[idx - 1]) * (
+                    self.height / (self.y_max - self.y_min))
+
+            alpha = np.arctan(y_scaled / x_scaled) / (2 * np.pi) * 360
 
         unit = beautiful_unit_string(self.units[property])
 
@@ -462,6 +473,8 @@ class StatesDiagram:
         y_property = self.supported_diagrams[diagram_type]['y_property']
         x_scale = self.supported_diagrams[diagram_type]['x_scale']
         y_scale = self.supported_diagrams[diagram_type]['y_scale']
+        self.ax.set_xscale(x_scale)
+        self.ax.set_yscale(y_scale)
 
         self.x_label = (
             x_property + ' in ' +
@@ -551,3 +564,6 @@ class StatesDiagram:
                     self.draw_isoline_label(
                         isoval.round(8), isoline,
                         int(data['label_position'] * len(x)), x, y)
+
+    def draw_isosurfaces(self, diagram_type):
+        'test'
