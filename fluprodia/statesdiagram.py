@@ -319,7 +319,6 @@ class StatesDiagram:
 
             for Q in [0, 1]:
                 try:
-                    print(v, self.v_crit)
                     self.state.update(CP.DmassQ_INPUTS, 1 / v, Q)
                     val = self.state.p()
 
