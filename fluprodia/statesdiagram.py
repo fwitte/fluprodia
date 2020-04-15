@@ -215,6 +215,14 @@ class StatesDiagram:
         if idx > len(x):
             return
 
+        if (x[idx] > self.x_max or x[idx] < self.x_min or
+                y[idx] > self.y_max or y[idx] < self.y_min or
+                x[idx - 1] > self.x_max or x[idx - 1] < self.x_min or
+                y[idx - 1] > self.y_max or y[idx - 1] < self.y_min):
+            return
+
+        idx -= 1
+
         if x[idx] - x[idx - 1] == 0:
             if y[idx] > y[idx - 1]:
                 alpha = 90
@@ -246,13 +254,6 @@ class StatesDiagram:
             x[idx], y[idx], txt, fontsize=5,
             rotation=alpha, va='center', ha='center',
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
-
-    def get_ax_size(self):
-        bbox = self.ax.get_window_extent().transformed(
-            self.fig.dpi_scale_trans.inverted())
-        width, height = bbox.width, bbox.height
-        self.width *= self.fig.dpi
-        self.height *= self.fig.dpi
 
     def isobar(self):
         isolines = self.pressure['isolines']
@@ -492,7 +493,6 @@ class StatesDiagram:
             raise ValueError(msg)
 
         self.ax.clear()
-        self.get_ax_size()
 
         x_property = self.supported_diagrams[diagram_type]['x_property']
         y_property = self.supported_diagrams[diagram_type]['y_property']
@@ -600,6 +600,3 @@ class StatesDiagram:
                         self.draw_isoline_label(
                             isoval.round(8), isoline,
                             int(data['label_position'] * len(x)), x, y)
-
-    def draw_isosurfaces(self, diagram_type):
-        'test'
