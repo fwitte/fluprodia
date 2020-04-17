@@ -28,17 +28,19 @@ def isolines_log(val_min, val_max):
 
 class StatesDiagram:
 
-    def __init__(self, fluid, backend='HEOS', width=16, height=10):
-        self.state = CP.AbstractState(backend, fluid)
-        self.backend = backend
+    def __init__(self, fluid, width=16, height=10):
+        self.state = CP.AbstractState('HEOS', fluid)
         self.fluid = fluid
         self.converters = {}
-        self.converters['p'] = {'Pa': 1, 'mbar': 1e2, 'bar': 1e5, 'MPa': 1e6}
-        self.converters['T'] = {'K': 0, '°C': 273.15}
+        self.converters['p'] = {
+            'Pa': 1, 'hPa': 1e2, 'mbar': 1e2, 'psi': 6894.7572931783,
+            'bar': 1e5, 'MPa': 1e6}
+        self.converters['T'] = {
+            'K': [0, 1], '°C': [273.15, 1], '°F': [459.67, 5 / 9]}
         self.converters['s'] = {'J/kgK': 1, 'kJ/kgK': 1e3, 'MJ/kgK': 1e6}
         self.converters['h'] = {'J/kg': 1, 'kJ/kg': 1e3, 'MJ/kg': 1e6}
         self.converters['v'] = {'m^3/kg': 1, 'l/kg': 1e-3}
-        self.converters['Q'] = {'%': 0.01}
+        self.converters['Q'] = {'-': 1, '%': 0.01}
         self.properties = {
             'p': 'pressure',
             'v': 'volume',
@@ -136,7 +138,9 @@ class StatesDiagram:
                 obj = getattr(self, self.properties[key])
                 if key == 'T':
                     obj['isolines'] = (
-                        kwargs[key] + self.converters[key][self.units[key]])
+                        (kwargs[key] +
+                         self.converters[key][self.units[key]][0]) *
+                        self.converters[key][self.units[key]][1])
                 else:
                     obj['isolines'] = (
                         kwargs[key] * self.converters[key][self.units[key]])
@@ -537,7 +541,8 @@ class StatesDiagram:
                 if 'values' in isoline_data[isoline].keys():
                     if isoline == 'T':
                         isovalues = (
-                            isoline_data[isoline]['values'] - isoline_conv)
+                            isoline_data[isoline]['values'] / isoline_conv[1] -
+                            isoline_conv[0])
                     else:
                         isovalues = (
                             isoline_data[isoline]['values'] * isoline_conv)
@@ -551,12 +556,12 @@ class StatesDiagram:
                     continue
 
                 if x_property == 'T':
-                    x = data[isoval][x_property] - x_conv
+                    x = data[isoval][x_property] / x_conv[1] - x_conv[0]
                 else:
                     x = data[isoval][x_property] / x_conv
 
                 if y_property == 'T':
-                    y = data[isoval][y_property] - y_conv
+                    y = data[isoval][y_property] / y_conv[1] - y_conv[0]
                 else:
                     y = data[isoval][y_property] / y_conv
 
@@ -589,7 +594,7 @@ class StatesDiagram:
 
                 if num_points > 1:
                     if isoline == 'T':
-                        isoval -= isoline_conv
+                        isoval = isoval / isoline_conv[1] - isoline_conv[0]
                     else:
                         isoval /= isoline_conv
 
