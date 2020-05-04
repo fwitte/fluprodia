@@ -12,19 +12,35 @@ def beautiful_unit_string(unit):
     return unit
 
 
+def isolines_log(val_min, val_max):
+
+    arr = [val_min]
+    digits = int(np.floor(np.log10(val_min)))
+    while arr[-1] < val_max:
+        arr += [1 * 10 ** digits]
+        arr += [2 * 10 ** digits]
+        arr += [5 * 10 ** digits]
+        digits += 1
+
+    arr = np.unique(np.asarray(arr + [val_max]))
+    return arr[(arr >= val_min) & (arr <= val_max)]
+
+
 class StatesDiagram:
 
-    def __init__(self, fluid, backend='HEOS', width=16, height=10):
-        self.state = CP.AbstractState(backend, fluid)
-        self.backend = backend
+    def __init__(self, fluid, width=16, height=10):
+        self.state = CP.AbstractState('HEOS', fluid)
         self.fluid = fluid
         self.converters = {}
-        self.converters['p'] = {'Pa': 1, 'mbar': 1e2, 'bar': 1e5, 'MPa': 1e6}
-        self.converters['T'] = {'K': 0, '°C': 273.15}
+        self.converters['p'] = {
+            'Pa': 1, 'hPa': 1e2, 'mbar': 1e2, 'psi': 6894.7572931783,
+            'bar': 1e5, 'MPa': 1e6}
+        self.converters['T'] = {
+            'K': [0, 1], '°C': [273.15, 1], '°F': [459.67, 5 / 9]}
         self.converters['s'] = {'J/kgK': 1, 'kJ/kgK': 1e3, 'MJ/kgK': 1e6}
         self.converters['h'] = {'J/kg': 1, 'kJ/kg': 1e3, 'MJ/kg': 1e6}
         self.converters['v'] = {'m^3/kg': 1, 'l/kg': 1e-3}
-        self.converters['Q'] = {'%': 0.01}
+        self.converters['Q'] = {'-': 1, '%': 0.01}
         self.properties = {
             'p': 'pressure',
             'v': 'volume',
@@ -51,6 +67,12 @@ class StatesDiagram:
                 'y_property': 'p',
                 'x_scale': 'linear',
                 'y_scale': 'log'
+            },
+            'Th': {
+                'x_property': 'h',
+                'y_property': 'T',
+                'x_scale': 'linear',
+                'y_scale': 'linear'
             }
         }
 
@@ -116,7 +138,9 @@ class StatesDiagram:
                 obj = getattr(self, self.properties[key])
                 if key == 'T':
                     obj['isolines'] = (
-                        kwargs[key] + self.converters[key][self.units[key]])
+                        (kwargs[key] +
+                         self.converters[key][self.units[key]][0]) *
+                        self.converters[key][self.units[key]][1])
                 else:
                     obj['isolines'] = (
                         kwargs[key] * self.converters[key][self.units[key]])
@@ -135,6 +159,7 @@ class StatesDiagram:
         self.state.update(CP.PT_INPUTS, self.p_trip, self.T_max)
         self.v_max = 1 / self.state.rhomass()
         self.s_max = self.state.smass()
+        self.h_max = self.state.hmass()
         self.iterator = np.linspace(0, self.s_max, 100)
         self.state.update(CP.PT_INPUTS, self.p_max, self.T_trip)
         self.v_min = 1 / self.state.rhomass()
@@ -143,14 +168,22 @@ class StatesDiagram:
         self.T_crit = self.state.trivial_keyed_output(CP.iT_critical)
         self.v_crit = 1 / self.state.trivial_keyed_output(CP.irhomass_critical)
 
-        self.pressure['isolines'] = np.geomspace(
-            self.p_trip, self.p_max, 11).round(8)
-        self.temperature['isolines'] = np.linspace(
-            self.T_trip, self.T_max, 11).round(8)
         self.quality['isolines'] = np.linspace(0, 1, 11).round(8)
-        self.entropy['isolines'] = np.linspace(0, self.s_max, 11).round(8)
-        self.volume['isolines'] = np.geomspace(
-            self.v_min, self.v_max, 11).round(8)
+
+        step = round(int(self.T_max - self.T_trip) / 15, -1)
+        self.temperature['isolines'] = np.append(
+            self.T_trip,
+            np.arange(self.T_max, self.T_trip, -step)[::-1]).round(8)
+
+        step = round(int(self.s_max) / 15, -1)
+        self.entropy['isolines'] = np.arange(0, self.s_max, step).round(8)
+
+        step = round(int(self.h_max) / 15, -1)
+        self.enthalpy['isolines'] = np.arange(0, self.h_max, step).round(8)
+
+        self.pressure['isolines'] = isolines_log(
+            self.p_trip, self.p_max).round(8)
+        self.volume['isolines'] = isolines_log(self.v_min, self.v_max).round(8)
 
     def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
         self.x_min = x_min
@@ -186,6 +219,14 @@ class StatesDiagram:
         if idx > len(x):
             return
 
+        if (x[idx] > self.x_max or x[idx] < self.x_min or
+                y[idx] > self.y_max or y[idx] < self.y_min or
+                x[idx - 1] > self.x_max or x[idx - 1] < self.x_min or
+                y[idx - 1] > self.y_max or y[idx - 1] < self.y_min):
+            return
+
+        idx -= 1
+
         if x[idx] - x[idx - 1] == 0:
             if y[idx] > y[idx - 1]:
                 alpha = 90
@@ -217,13 +258,6 @@ class StatesDiagram:
             x[idx], y[idx], txt, fontsize=5,
             rotation=alpha, va='center', ha='center',
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
-
-    def get_ax_size(self):
-        bbox = self.ax.get_window_extent().transformed(
-            self.fig.dpi_scale_trans.inverted())
-        width, height = bbox.width, bbox.height
-        self.width *= self.fig.dpi
-        self.height *= self.fig.dpi
 
     def isobar(self):
         isolines = self.pressure['isolines']
@@ -267,15 +301,17 @@ class StatesDiagram:
     def isochor(self):
         isolines = self.volume['isolines']
 
+        iterator = np.geomspace(self.p_trip, self.p_max, 100)
+
         for v in isolines.round(8):
             self.volume[v] = {'h': [], 'T': [], 'p': [], 's': [], 'v': []}
-            for val in self.iterator:
+            for val in iterator:
                 try:
-                    self.state.update(CP.DmassSmass_INPUTS, 1 / v, val)
+                    self.state.update(CP.DmassP_INPUTS, 1 / v, val)
                     self.volume[v]['h'] += [self.state.hmass()]
                     self.volume[v]['T'] += [self.state.T()]
-                    self.volume[v]['p'] += [self.state.p()]
-                    self.volume[v]['s'] += [val]
+                    self.volume[v]['p'] += [val]
+                    self.volume[v]['s'] += [self.state.smass()]
                     self.volume[v]['v'] += [v]
                 except ValueError:
                     continue
@@ -286,22 +322,22 @@ class StatesDiagram:
             self.volume[v]['s'] = np.asarray(self.volume[v]['s'])
             self.volume[v]['v'] = np.asarray(self.volume[v]['v'])
 
-            if v >= self.v_crit:
+            for Q in [0, 1]:
                 try:
-                    self.state.update(CP.DmassQ_INPUTS, 1 / v, 1)
-                    s = self.state.smass()
+                    self.state.update(CP.DmassQ_INPUTS, 1 / v, Q)
+                    val = self.state.p()
 
-                    idx = np.searchsorted(self.volume[v]['s'], s)
+                    idx = np.searchsorted(self.volume[v]['p'], val)
                     self.volume[v]['h'] = np.insert(
                         self.volume[v]['h'], idx, self.state.hmass())
                     self.volume[v]['T'] = np.insert(
                         self.volume[v]['T'], idx, self.state.T())
                     self.volume[v]['p'] = np.insert(
-                        self.volume[v]['p'], idx, self.state.p())
+                        self.volume[v]['p'], idx, val)
                     self.volume[v]['s'] = np.insert(
-                        self.volume[v]['s'], idx, s)
+                        self.volume[v]['s'], idx, self.state.smass())
                     self.volume[v]['v'] = np.insert(
-                        self.volume[v]['v'], idx, s)
+                        self.volume[v]['v'], idx, v)
                 except ValueError:
                     continue
 
@@ -335,9 +371,7 @@ class StatesDiagram:
     def isoenthalpy(self):
         isolines = self.enthalpy['isolines']
 
-        iterator = np.geomspace(
-            self.pressure['isolines'].min(),
-            self.pressure['isolines'].max(), 100)
+        iterator = np.geomspace(self.p_trip, self.p_max, 100)
 
         for h in isolines.round(8):
             self.enthalpy[h] = {
@@ -381,18 +415,16 @@ class StatesDiagram:
     def isotherm(self):
         isolines = self.temperature['isolines']
 
-        iterator = np.geomspace(
-            self.volume['isolines'].min(),
-            self.volume['isolines'].max(), 150)
+        iterator = np.geomspace(self.p_trip, self.p_max, 100)
 
         for T in isolines.round(8):
             self.temperature[T] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
                 try:
-                    self.state.update(CP.DmassT_INPUTS, 1 / val, T)
+                    self.state.update(CP.PT_INPUTS, val, T)
                     self.temperature[T]['T'] += [T]
-                    self.temperature[T]['p'] += [self.state.p()]
+                    self.temperature[T]['p'] += [val]
                     self.temperature[T]['v'] += [1 / self.state.rhomass()]
                     self.temperature[T]['s'] += [self.state.smass()]
                     self.temperature[T]['h'] += [self.state.hmass()]
@@ -409,17 +441,17 @@ class StatesDiagram:
                 for Q in [0, 1]:
                     try:
                         self.state.update(CP.QT_INPUTS, Q, T)
-                        s = self.state.smass()
+                        p = self.state.p()
+                        idx = np.searchsorted(self.temperature[T]['p'], p)
 
-                        idx = np.searchsorted(self.temperature[T]['s'], s)
                         self.temperature[T]['h'] = np.insert(
                             self.temperature[T]['h'], idx, self.state.hmass())
                         self.temperature[T]['T'] = np.insert(
                             self.temperature[T]['T'], idx, T)
                         self.temperature[T]['p'] = np.insert(
-                            self.temperature[T]['p'], idx, self.state.p())
+                            self.temperature[T]['p'], idx, p)
                         self.temperature[T]['s'] = np.insert(
-                            self.temperature[T]['s'], idx, s)
+                            self.temperature[T]['s'], idx, self.state.smass())
                         self.temperature[T]['v'] = np.insert(
                             self.temperature[T]['v'], idx,
                             1 / self.state.rhomass())
@@ -429,18 +461,16 @@ class StatesDiagram:
     def isoentropy(self):
         isolines = self.entropy['isolines']
 
-        iterator = np.linspace(
-            self.temperature['isolines'].min(),
-            self.temperature['isolines'].max(), 100)
+        iterator = np.geomspace(self.p_trip, self.p_max, 100)
 
         for s in isolines.round(8):
             self.entropy[s] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
             for val in iterator:
                 try:
-                    self.state.update(CP.SmassT_INPUTS, s, val)
-                    self.entropy[s]['T'] += [val]
-                    self.entropy[s]['p'] += [self.state.p()]
+                    self.state.update(CP.PSmass_INPUTS, val, s)
+                    self.entropy[s]['T'] += [self.state.T()]
+                    self.entropy[s]['p'] += [val]
                     self.entropy[s]['v'] += [1 / self.state.rhomass()]
                     self.entropy[s]['s'] += [s]
                     self.entropy[s]['h'] += [self.state.hmass()]
@@ -467,7 +497,6 @@ class StatesDiagram:
             raise ValueError(msg)
 
         self.ax.clear()
-        self.get_ax_size()
 
         x_property = self.supported_diagrams[diagram_type]['x_property']
         y_property = self.supported_diagrams[diagram_type]['y_property']
@@ -512,7 +541,8 @@ class StatesDiagram:
                 if 'values' in isoline_data[isoline].keys():
                     if isoline == 'T':
                         isovalues = (
-                            isoline_data[isoline]['values'] - isoline_conv)
+                            isoline_data[isoline]['values'] / isoline_conv[1] -
+                            isoline_conv[0])
                     else:
                         isovalues = (
                             isoline_data[isoline]['values'] * isoline_conv)
@@ -526,12 +556,12 @@ class StatesDiagram:
                     continue
 
                 if x_property == 'T':
-                    x = data[isoval][x_property] - x_conv
+                    x = data[isoval][x_property] / x_conv[1] - x_conv[0]
                 else:
                     x = data[isoval][x_property] / x_conv
 
                 if y_property == 'T':
-                    y = data[isoval][y_property] - y_conv
+                    y = data[isoval][y_property] / y_conv[1] - y_conv[0]
                 else:
                     y = data[isoval][y_property] / y_conv
 
@@ -540,30 +570,38 @@ class StatesDiagram:
                     np.where((y >= self.y_min) & (y <= self.y_max))
                 )
 
-                if len(indices) > 0:
-                    gap = np.where(np.diff(indices) > 1)[0]
-                    if len(gap) > 0:
-                        indices = np.insert(
-                            indices, gap + 1, indices[gap] + 1)
-                        indices = np.insert(
-                            indices, gap + 2, indices[gap + 2] - 1)
+                if len(indices) == 0:
+                    continue
 
-                    if indices[0] != 0:
-                        indices = np.insert(indices, 0, indices[0] - 1)
-                    if indices[-1] < len(x) - 1:
-                        indices = np.append(indices, indices[-1] + 1)
+                gap = np.where(np.diff(indices) > 1)[0]
+                if len(gap) > 0:
+                    indices = np.insert(
+                        indices, gap + 1, indices[gap] + 1)
+                    indices = np.insert(
+                        indices, gap + 2, indices[gap + 2] - 1)
 
-                    y = y[indices]
-                    x = x[indices]
+                if indices[0] != 0:
+                    indices = np.insert(indices, 0, indices[0] - 1)
+                if indices[-1] < len(x) - 1:
+                    indices = np.append(indices, indices[-1] + 1)
 
-                    self.ax.plot(x, y, **data['style'])
+                y = y[indices]
+                x = x[indices]
+
+                self.ax.plot(x, y, **data['style'])
+
+                num_points = len(indices)
+
+                if num_points > 1:
                     if isoline == 'T':
-                        isoval -= isoline_conv
+                        isoval = isoval / isoline_conv[1] - isoline_conv[0]
                     else:
                         isoval /= isoline_conv
-                    self.draw_isoline_label(
-                        isoval.round(8), isoline,
-                        int(data['label_position'] * len(x)), x, y)
 
-    def draw_isosurfaces(self, diagram_type):
-        'test'
+                    if num_points < 5:
+                        self.draw_isoline_label(
+                            isoval.round(8), isoline, num_points - 2, x, y)
+                    else:
+                        self.draw_isoline_label(
+                            isoval.round(8), isoline,
+                            int(data['label_position'] * len(x)), x, y)
