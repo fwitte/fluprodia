@@ -29,7 +29,7 @@ matplotlib [2]_ and numpy [3]_.
 
 .. |coveralls| image:: https://coveralls.io/repos/fwitte/fluprodia/badge.svg?branch=master&service=github
     :alt: Coverage Status
-    :target: https://coveralls.io/r/fwitte/fluprodia
+    :target: https://coveralls.io/github/fwitte/fluprodia
 
 .. |version| image:: https://img.shields.io/pypi/v/fluprodia.svg
     :alt: PyPI Package latest release
@@ -69,7 +69,7 @@ Installation and Quickstart
 Documentation
 =============
 
-See the online documentation at https://fluprodia.readthedocs.io/.
+See the online documentation at https://fluprodia.readthedocs.io/en/latest/.
 
 References
 ==========
