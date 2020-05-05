@@ -14,10 +14,10 @@ matrix:
       env:
         - TOXENV=docs
     - env:
-        - TOXENV=py36-cover,coveralls
+        - TOXENV=py36-cover
       python: '3.6'
     - env:
-        - TOXENV=py37-nocov
+        - TOXENV=py37-cover,coveralls
       python: '3.7'
 before_install:
   - python --version
