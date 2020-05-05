@@ -4,4 +4,4 @@ Reference
 .. toctree::
     :glob:
 
-    tespy.plotting*
+    fluprodia*
