@@ -1,5 +1,5 @@
 
-from tespy.plotting import main
+from fluprodia import FluidPropertyDiagram
 
 
 def test_main():
