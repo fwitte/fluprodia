@@ -477,9 +477,6 @@ class FluidPropertyDiagram:
 
         iterator = np.geomspace(self.p_trip, self.p_max, 200)
 
-        self.state.update(CP.PT_INPUTS, self.p_crit, self.T_crit)
-        s_crit = self.state.smass()
-
         for s in isolines.round(8):
             self.entropy[s] = {
                 'h': [], 'T': [], 'p': [], 's': [], 'v': []}
