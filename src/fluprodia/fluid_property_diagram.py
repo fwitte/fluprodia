@@ -4,6 +4,18 @@ import matplotlib.pyplot as plt
 
 
 def beautiful_unit_string(unit):
+    r"""Convert unit fractions to latex.
+
+    Parameters
+    ----------
+    unit : str
+        Value of unit for input, e.g. :code:`m^3/kg`.
+
+    Returns
+    -------
+    unit : str
+        Value of unit for output, e.g. :code:`$\frac{m^3}{kg}$`.
+    """
     if '/' in unit:
         numerator = unit.split('/')[0]
         denominator = unit.split('/')[1]
@@ -13,7 +25,23 @@ def beautiful_unit_string(unit):
 
 
 def isolines_log(val_min, val_max):
+    """Generate default logarithmic isolines.
 
+    Parameters
+    ----------
+    val_min : float
+        Minimum value for isoline range.
+
+    val_max : float
+        Maximum value for isoline range.
+
+    Returns
+    -------
+    arr : ndarray
+        numpy array with logarithmically spaced values starting from the
+        minimum value going to the maximum value in steps of :code:`1ek`,
+        :code:`2ek` and :code:`5ek`.
+    """
     arr = [val_min]
     digits = int(np.floor(np.log10(val_min)))
     while arr[-1] < val_max:
@@ -27,8 +55,63 @@ def isolines_log(val_min, val_max):
 
 
 class FluidPropertyDiagram:
+    """Short summary.
+
+    Parameters
+    ----------
+    fluid : type
+        Description of parameter `fluid`.
+    width : type
+        Description of parameter `width`.
+    height : type
+        Description of parameter `height`.
+
+    Attributes
+    ----------
+    state : type
+        Description of attribute `state`.
+    converters : type
+        Description of attribute `converters`.
+    properties : type
+        Description of attribute `properties`.
+    units : type
+        Description of attribute `units`.
+    supported_diagrams : type
+        Description of attribute `supported_diagrams`.
+    set_diagram_layout : type
+        Description of attribute `set_diagram_layout`.
+    set_unit_system : type
+        Description of attribute `set_unit_system`.
+    pressure : type
+        Description of attribute `pressure`.
+    entropy : type
+        Description of attribute `entropy`.
+    temperature : type
+        Description of attribute `temperature`.
+    enthalpy : type
+        Description of attribute `enthalpy`.
+    volume : type
+        Description of attribute `volume`.
+    quality : type
+        Description of attribute `quality`.
+    set_isoline_defaults : type
+        Description of attribute `set_isoline_defaults`.
+    fluid
+
+    """
 
     def __init__(self, fluid, width=16, height=10):
+        """Short summary.
+
+        Parameters
+        ----------
+        fluid : type
+            Description of parameter `fluid`.
+        width : type
+            Description of parameter `width`.
+        height : type
+            Description of parameter `height`.
+        """
         self.state = CP.AbstractState('HEOS', fluid)
         self.fluid = fluid
         self.converters = {}
@@ -98,6 +181,7 @@ class FluidPropertyDiagram:
         self.default_label_positioning()
 
     def default_line_layout(self):
+        """Short summary."""
         self.pressure['style'] = {
             'linestyle': '-.',
             'color': '#363636',
@@ -130,6 +214,7 @@ class FluidPropertyDiagram:
         }
 
     def default_label_positioning(self):
+        """Short summary."""
         self.pressure['label_position'] = 0.85
         self.volume['label_position'] = 0.7
         self.quality['label_position'] = 0.225
@@ -138,6 +223,13 @@ class FluidPropertyDiagram:
         self.temperature['label_position'] = 0.95
 
     def set_isolines(self, **kwargs):
+        """Short summary.
+
+        Parameters
+        ----------
+        **kwargs : type
+            Description of parameter `**kwargs`.
+        """
         keys = ['p', 'T', 'Q', 's', 'h', 'v']
         for key in kwargs:
             if key in keys:
@@ -158,6 +250,7 @@ class FluidPropertyDiagram:
                 print(msg)
 
     def set_isoline_defaults(self):
+        """Short summary."""
         self.p_trip = self.state.trivial_keyed_output(CP.iP_triple)
         self.p_max = self.state.trivial_keyed_output(CP.iP_max)
         self.T_trip = self.state.trivial_keyed_output(CP.iT_triple)
@@ -192,18 +285,57 @@ class FluidPropertyDiagram:
         self.volume['isolines'] = isolines_log(self.v_min, self.v_max).round(8)
 
     def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
+        """Short summary.
+
+        Parameters
+        ----------
+        x_min : type
+            Description of parameter `x_min`.
+        x_max : type
+            Description of parameter `x_max`.
+        y_min : type
+            Description of parameter `y_min`.
+        y_max : type
+            Description of parameter `y_max`.
+        """
         self.x_min = x_min
         self.x_max = x_max
         self.y_min = y_min
         self.y_max = y_max
 
     def set_diagram_layout(self, width, height):
+        """Short summary.
+
+        Parameters
+        ----------
+        width : type
+            Description of parameter `width`.
+        height : type
+            Description of parameter `height`.
+        """
         self.width = width
         self.height = height
         self.fig = plt.figure(figsize=(self.width, self.height))
         self.ax = self.fig.add_subplot()
 
     def set_unit_system(self, p_unit='Pa', T_unit='K', s_unit='J/kgK', h_unit='J/kg', v_unit='m^3/kg', Q_unit='%'):
+        """Short summary.
+
+        Parameters
+        ----------
+        p_unit : type
+            Description of parameter `p_unit`.
+        T_unit : type
+            Description of parameter `T_unit`.
+        s_unit : type
+            Description of parameter `s_unit`.
+        h_unit : type
+            Description of parameter `h_unit`.
+        v_unit : type
+            Description of parameter `v_unit`.
+        Q_unit : type
+            Description of parameter `Q_unit`.
+        """
         self.units['p'] = p_unit
         self.units['T'] = T_unit
         self.units['s'] = s_unit
@@ -211,7 +343,16 @@ class FluidPropertyDiagram:
         self.units['v'] = v_unit
         self.units['Q'] = Q_unit
 
-    def save(self, filename='StatesDiagram.pdf', **kwargs):
+    def save(self, filename='FluidPropertyDiagram.pdf', **kwargs):
+        """Short summary.
+
+        Parameters
+        ----------
+        filename : type
+            Description of parameter `filename`.
+        **kwargs : type
+            Description of parameter `**kwargs`.
+        """
         self.ax.set_xlim([self.x_min, self.x_max])
         self.ax.set_ylim([self.y_min, self.y_max])
         self.ax.set_xlabel(self.x_label)
@@ -221,7 +362,21 @@ class FluidPropertyDiagram:
         self.fig.savefig(filename, **kwargs)
 
     def draw_isoline_label(self, isoline, property, idx, x, y):
+        """Short summary.
 
+        Parameters
+        ----------
+        isoline : type
+            Description of parameter `isoline`.
+        property : type
+            Description of parameter `property`.
+        idx : type
+            Description of parameter `idx`.
+        x : type
+            Description of parameter `x`.
+        y : type
+            Description of parameter `y`.
+        """
         if idx > len(x):
             return
 
@@ -266,6 +421,7 @@ class FluidPropertyDiagram:
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
 
     def calc_isolines(self):
+        """Short summary."""
         self.isobar()
         self.isochor()
         self.isoquality()
@@ -274,6 +430,7 @@ class FluidPropertyDiagram:
         self.isoentropy()
 
     def isobar(self):
+        """Short summary."""
         isolines = self.pressure['isolines']
 
         for p in isolines.round(8):
@@ -313,6 +470,7 @@ class FluidPropertyDiagram:
                         self.pressure[p]['p'], idx, s)
 
     def isochor(self):
+        """Short summary."""
         isolines = self.volume['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 100)
@@ -356,6 +514,7 @@ class FluidPropertyDiagram:
                     continue
 
     def isoquality(self):
+        """Short summary."""
         isolines = self.quality['isolines']
 
         iterator = np.append(
@@ -383,6 +542,7 @@ class FluidPropertyDiagram:
             self.quality[Q]['T'] = np.asarray(self.quality[Q]['T'])
 
     def isoenthalpy(self):
+        """Short summary."""
         isolines = self.enthalpy['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 100)
@@ -427,6 +587,7 @@ class FluidPropertyDiagram:
                     continue
 
     def isotherm(self):
+        """Short summary."""
         isolines = self.temperature['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 300)
@@ -473,6 +634,7 @@ class FluidPropertyDiagram:
                         continue
 
     def isoentropy(self):
+        """Short summary."""
         isolines = self.entropy['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 200)
@@ -498,7 +660,15 @@ class FluidPropertyDiagram:
             self.entropy[s]['h'] = np.asarray(self.entropy[s]['h'])
 
     def draw_isolines(self, diagram_type, isoline_data=None):
+        """Short summary.
 
+        Parameters
+        ----------
+        diagram_type : type
+            Description of parameter `diagram_type`.
+        isoline_data : type
+            Description of parameter `isoline_data`.
+        """
         if not isinstance(diagram_type, str):
             msg = (
                 'The diagram_type must be specified as string. Available '
