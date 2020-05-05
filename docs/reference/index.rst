@@ -2,6 +2,6 @@ Reference
 =========
 
 .. toctree::
-    :glob:
+   :maxdepth: 4
 
-    fluprodia*
+    fluprodia
