@@ -16,8 +16,8 @@ matplotlib [2]_ and numpy [3]_.
       - | |travis|
         | |coveralls|
     * - package
-      - | |version| |wheel| |supported-versions| |supported-implementations|
-        | |commits-since|
+      - | |version| |wheel|
+        | |supported-versions|
 
 .. |docs| image:: https://readthedocs.org/projects/fluprodia/badge/?style=flat
     :target: https://readthedocs.org/projects/fluprodia
