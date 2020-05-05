@@ -265,6 +265,14 @@ class FluidPropertyDiagram:
             rotation=alpha, va='center', ha='center',
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
 
+    def calc_isolines(self):
+        self.isobar()
+        self.isochor()
+        self.isoquality()
+        self.isoenthalpy()
+        self.isotherm()
+        self.isoentropy()
+
     def isobar(self):
         isolines = self.pressure['isolines']
 
