@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 import os
 import traceback
+from pkg_resources import get_distribution
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -20,12 +21,8 @@ project = 'fluprodia'
 year = '2020'
 author = 'Francesco Witte'
 copyright = '{0}, {1}'.format(year, author)
-try:
-    from pkg_resources import get_distribution
-    version = release = get_distribution('fluprodia').version
-except Exception:
-    traceback.print_exc()
-    version = release = '0.0.1'
+
+version = release = get_distribution('fluprodia').version
 
 pygments_style = 'trac'
 templates_path = ['.']
