@@ -1,6 +1,6 @@
-fluprodia========
-Overview
-========
+=======================
+Fluid Property Diagrams
+=======================
 
 .. start-badges
 
@@ -15,6 +15,7 @@ Overview
     * - package
       - | |version| |wheel| |supported-versions| |supported-implementations|
         | |commits-since|
+
 .. |docs| image:: https://readthedocs.org/projects/fluprodia/badge/?style=flat
     :target: https://readthedocs.org/projects/fluprodia
     :alt: Documentation Status
@@ -70,30 +71,5 @@ You can also install the in-development version with::
 Documentation
 =============
 
-
 https://fluprodia.readthedocs.io/
 
-
-Development
-===========
-
-To run the all tests run::
-
-    tox
-
-Note, to combine the coverage data from all the tox environments run:
-
-.. list-table::
-    :widths: 10 90
-    :stub-columns: 1
-
-    - - Windows
-      - ::
-
-            set PYTEST_ADDOPTS=--cov-append
-            tox
-
-    - - Other
-      - ::
-
-            PYTEST_ADDOPTS=--cov-append tox
