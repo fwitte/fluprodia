@@ -2,8 +2,9 @@
 Fluid Property Diagrams
 =======================
 
-Create custom Fluid Proprety Diagrams with fluprodia using CoolProp [1]_,
-matplotlib [2]_ and numpy [3]_.
+Create custom and beautiful Fluid Property Diagrams with fluprodia. The package
+implements fluid property data from CoolProp [1]_. Plotting is handled by
+matplotlib [2]_, all calculations are performed with numpy [3]_.
 
 .. start-badges
 
@@ -49,8 +50,8 @@ matplotlib [2]_ and numpy [3]_.
 
 * Free software: MIT license
 
-Installation and Quickstart
-===========================
+Installation and Usage
+======================
 
 .. code-block:: bash
 
@@ -69,7 +70,8 @@ Installation and Quickstart
 Documentation
 =============
 
-See the online documentation at https://fluprodia.readthedocs.io/en/latest/.
+For further examples and usage please refer to the online documentation at
+https://fluprodia.readthedocs.io/en/latest/.
 
 References
 ==========
