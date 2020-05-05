@@ -1,3 +1,15 @@
+# -*- coding: utf-8
+
+"""Module for fluid property diagram creation.
+
+This file is part of project fluprodia (github.com/fwitte/fluprodia). It's
+copyrighted by the contributors recorded in the version control history of the
+file, available from its original location
+src/fluprodia/fluid_property_diagram.py
+
+SPDX-License-Identifier: MIT
+"""
+
 import CoolProp as CP
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,65 +67,113 @@ def isolines_log(val_min, val_max):
 
 
 class FluidPropertyDiagram:
-    """Short summary.
+    u"""Short summary.
 
     Parameters
     ----------
-    fluid : type
-        Description of parameter `fluid`.
-    width : type
-        Description of parameter `width`.
-    height : type
-        Description of parameter `height`.
+    fluid : str
+        Fluid for diagram.
 
-    Attributes
-    ----------
-    state : type
-        Description of attribute `state`.
-    converters : type
-        Description of attribute `converters`.
-    properties : type
-        Description of attribute `properties`.
-    units : type
-        Description of attribute `units`.
-    supported_diagrams : type
-        Description of attribute `supported_diagrams`.
-    set_diagram_layout : type
-        Description of attribute `set_diagram_layout`.
-    set_unit_system : type
-        Description of attribute `set_unit_system`.
-    pressure : type
-        Description of attribute `pressure`.
-    entropy : type
-        Description of attribute `entropy`.
-    temperature : type
-        Description of attribute `temperature`.
-    enthalpy : type
-        Description of attribute `enthalpy`.
-    volume : type
-        Description of attribute `volume`.
-    quality : type
-        Description of attribute `quality`.
-    set_isoline_defaults : type
-        Description of attribute `set_isoline_defaults`.
-    fluid
+    width : float
+        Width of all diagrams (default value: :code:`width=16.0`).
 
+    height : float
+        Height of all diagrams (default value: :code:`height=10.0`).
+
+    Example
+    -------
+    This is a small example of how to create a fluid property dataset for water
+    and export to Ts-, hs- and logph-diagram. The default values for width and
+    height are 16/10.
+
+    >>> from fluprodia import FluidPropertyDiagram
+    >>> import numpy as np
+    >>> diagram = FluidPropertyDiagram('water')
+    >>> diagram.width
+    16.0
+    >>> diagram.height
+    10.0
+
+    After object creation it is possible to specify isolines. There are deault
+    isolines available, but these might not suit your requirements. We will
+    define temperature and enthalpy isolines for this case. Before that, we
+    need to specify the units if we do not want to use SI units. For available
+    units see the
+    :py:meth:`fluprodia.fluid_property_diagram.FluidPropertyDiagram.set_unit_system`
+    documentation.
+
+    >>> diagram.set_unit_system(T='°C', p='MPa', s='kJ/kgK', h='kJ/kg')
+    >>> iso_T = np.arange(50, 701, 50)
+    >>> iso_h = np.arange(0, 3601, 200)
+    >>> diagram.set_isolines(T=iso_T, h=iso_h)
+
+    Now we can calculate the diagram data and export after that. If you want to
+    plot additional data on the diagram (e.g. measurement data from a
+    thermodynamic process) you can do this on the :code:`diagram.ax` object. It
+    is an :code:`matplotlib.axes._subplots.AxesSubplot` object and therefore
+    you can apply standard matplotlib methods. The figure of the plot can be
+    accessed via :code:`diagram.fig`
+
+    >>> type(diagram.ax)
+    <class 'matplotlib.axes._subplots.AxesSubplot'>
+    >>> type(diagram.fig)
+    <class 'matplotlib.figure.Figure'>
+    >>> diagram.calc_isolines()
+
+    After that it is possible to specify the view range of the plot and draw
+    the isolines of a specific type of diagram. Last step is to export your
+    diagram. Any file format supported by matplotlib is possible.
+
+    >>> diagram.set_limits(x_min=0, x_max=8, y_min=0, y_max=700)
+    >>> diagram.draw_isolines(diagram_type='Ts')
+    >>> diagram.save('Ts_Diagramm.pdf')
+
+    If we want to create a different diagram, e.g. hs-diagram, it is not
+    necessary to recalculate the isolines. Instead, reset the limits to match
+    your needs and draw the isolines for a different diagram. If limits do not
+    change, there is no necessety to respecify the limits.
+
+    >>> diagram.set_limits(y_min=0, y_max=3600)
+    >>> diagram.draw_isolines(diagram_type='hs')
+    >>> diagram.save('hs_Diagramm.pdf')
+
+    >>> diagram.set_limits(x_min=0, x_max=3600, y_min=1e-2, y_max=5e2)
+    >>> diagram.draw_isolines(diagram_type='logph')
+    >>> diagram.save('logph_Diagramm.pdf')
+
+    It is also possible to specify/modify the isolines to plot. For example,
+    the lines of constant specific enthalpy should be plotted in red color
+    and with a linewidth of 2. Also, the lines of constant specific volumen
+    should not be plotted at all. For more information see the
+    :py:meth:`fluprodia.fluid_property_diagram.FluidPropertyDiagram.draw_isolines`
+    method.
+
+    >>> diagram.set_limits(x_min=0, x_max=8, y_min=0, y_max=700)
+    >>> diagram.draw_isolines(diagram_type='Ts',
+    ... isoline_data={'h': {
+    ... 'values': iso_h,
+    ... 'style': {'linewidth': 2, 'color': '#ff0000'}},
+    ... 'v': {'values': np.array([])}})
+    >>> diagram.save('Ts_Diagramm.pdf')
     """
 
-    def __init__(self, fluid, width=16, height=10):
-        """Short summary.
+    def __init__(self, fluid, width=16.0, height=10.0):
+        u"""Create a FluidPropertyDiagram object.
 
         Parameters
         ----------
-        fluid : type
-            Description of parameter `fluid`.
-        width : type
-            Description of parameter `width`.
-        height : type
-            Description of parameter `height`.
+        fluid : str
+            Fluid for diagram.
+
+        width : float
+            Width of all diagrams (default value: :code:`width=16.0`).
+
+        height : float
+            Height of all diagrams (default value: :code:`height=10.0`).
         """
-        self.state = CP.AbstractState('HEOS', fluid)
         self.fluid = fluid
+        self.state = CP.AbstractState('HEOS', self.fluid)
+
         self.converters = {}
         self.converters['p'] = {
             'Pa': 1, 'hPa': 1e2, 'mbar': 1e2, 'psi': 6894.7572931783,
@@ -124,14 +184,25 @@ class FluidPropertyDiagram:
         self.converters['h'] = {'J/kg': 1, 'kJ/kg': 1e3, 'MJ/kg': 1e6}
         self.converters['v'] = {'m^3/kg': 1, 'l/kg': 1e-3}
         self.converters['Q'] = {'-': 1, '%': 0.01}
+
+        self.units = {
+            'p': 'Pa',
+            's': 'J/kgK',
+            'h': 'J/kg',
+            'v': 'm^3/kg',
+            'Q': '-',
+            'T': 'K',
+        }
+
         self.properties = {
             'p': 'pressure',
             'v': 'volume',
             'T': 'temperature',
             'h': 'enthalpy',
             's': 'entropy',
-            'Q': 'quality'}
-        self.units = {}
+            'Q': 'quality'
+        }
+
         self.supported_diagrams = {
             'Ts': {
                 'x_property': 's',
@@ -165,6 +236,11 @@ class FluidPropertyDiagram:
             }
         }
 
+        self.x_min = None
+        self.x_max = None
+        self.y_min = None
+        self.y_max = None
+
         self.set_diagram_layout(width, height)
         self.set_unit_system()
 
@@ -181,7 +257,7 @@ class FluidPropertyDiagram:
         self.default_label_positioning()
 
     def default_line_layout(self):
-        """Short summary."""
+        """Definition of the default isoline layout."""
         self.pressure['style'] = {
             'linestyle': '-.',
             'color': '#363636',
@@ -214,7 +290,7 @@ class FluidPropertyDiagram:
         }
 
     def default_label_positioning(self):
-        """Short summary."""
+        """Definition of the default label positioning."""
         self.pressure['label_position'] = 0.85
         self.volume['label_position'] = 0.7
         self.quality['label_position'] = 0.225
@@ -223,12 +299,27 @@ class FluidPropertyDiagram:
         self.temperature['label_position'] = 0.95
 
     def set_isolines(self, **kwargs):
-        """Short summary.
+        """Set the isolines.
 
         Parameters
         ----------
-        **kwargs : type
-            Description of parameter `**kwargs`.
+        p : ndarray
+            Isolines for pressure.
+
+        T : ndarray
+            Isolines for temperature.
+
+        Q : ndarray
+            Isolines for vapor mass fraction.
+
+        s : ndarray
+            Isolines for specific entropy.
+
+        h : ndarray
+            Isolines for specific enthalpy.
+
+        v : ndarray
+            Isolines for specific volume.
         """
         keys = ['p', 'T', 'Q', 's', 'h', 'v']
         for key in kwargs:
@@ -250,7 +341,7 @@ class FluidPropertyDiagram:
                 print(msg)
 
     def set_isoline_defaults(self):
-        """Short summary."""
+        """Calculate the default values for the isolines."""
         self.p_trip = self.state.trivial_keyed_output(CP.iP_triple)
         self.p_max = self.state.trivial_keyed_output(CP.iP_max)
         self.T_trip = self.state.trivial_keyed_output(CP.iT_triple)
@@ -284,74 +375,95 @@ class FluidPropertyDiagram:
             self.p_trip, self.p_max).round(8)
         self.volume['isolines'] = isolines_log(self.v_min, self.v_max).round(8)
 
-    def set_limits(self, x_min=None, x_max=None, y_min=None, y_max=None):
-        """Short summary.
+    def set_limits(self, **kwargs):
+        """Set the diagram's limits.
 
         Parameters
         ----------
-        x_min : type
-            Description of parameter `x_min`.
-        x_max : type
-            Description of parameter `x_max`.
-        y_min : type
-            Description of parameter `y_min`.
-        y_max : type
-            Description of parameter `y_max`.
+        x_min : float
+            Minimum value for x axis :code:`x_min`.
+
+        x_max : float
+            Maximum value for x axis :code:`x_max`.
+
+        y_min : float
+            Minimum value for y axis :code:`y_min`.
+
+        y_max : float
+            Maximum value for y axis :code:`y_max`.
         """
-        self.x_min = x_min
-        self.x_max = x_max
-        self.y_min = y_min
-        self.y_max = y_max
+        self.x_min = kwargs.get('x_min', self.x_min)
+        self.x_max = kwargs.get('x_max', self.x_max)
+        self.y_min = kwargs.get('y_min', self.y_min)
+        self.y_max = kwargs.get('y_max', self.y_max)
 
     def set_diagram_layout(self, width, height):
-        """Short summary.
+        """Set the diagram's width and height and create the figure.
 
         Parameters
         ----------
-        width : type
-            Description of parameter `width`.
-        height : type
-            Description of parameter `height`.
+        width : float
+            Width of all diagrams.
+
+        height : float
+            Height of all diagrams.
         """
         self.width = width
         self.height = height
         self.fig = plt.figure(figsize=(self.width, self.height))
         self.ax = self.fig.add_subplot()
 
-    def set_unit_system(self, p_unit='Pa', T_unit='K', s_unit='J/kgK', h_unit='J/kg', v_unit='m^3/kg', Q_unit='%'):
-        """Short summary.
+    def set_unit_system(self, **kwargs):
+        u"""Set the unit system for the fluid properties.
 
         Parameters
         ----------
-        p_unit : type
-            Description of parameter `p_unit`.
-        T_unit : type
-            Description of parameter `T_unit`.
-        s_unit : type
-            Description of parameter `s_unit`.
-        h_unit : type
-            Description of parameter `h_unit`.
-        v_unit : type
-            Description of parameter `v_unit`.
-        Q_unit : type
-            Description of parameter `Q_unit`.
+        p : str
+            Unit of pressure, units available are
+            :code:`Pa, hPa, mbar, psi, bar, MPa`.
+
+        T : str
+            Unit of temperatur, units available are
+            :code:`K, °C, °F`.
+
+        s : str
+            Unit of specific entropy, units available are
+            :code:`J/kgK, kJ/kgK, MJ/kgK`.
+
+        h : str
+            Unit of specific enthalpy, units available are
+            :code:`J/kg, kJ/kg, MJ/kg`.
+
+        v : str
+            Unit of specific volume, units available are
+            :code:`m^3/kg, l/kg`.
+
+        Q : str
+            Unit of vapor mass fraction, units available are
+            :code:`-, %`.
         """
-        self.units['p'] = p_unit
-        self.units['T'] = T_unit
-        self.units['s'] = s_unit
-        self.units['h'] = h_unit
-        self.units['v'] = v_unit
-        self.units['Q'] = Q_unit
+        for key, value in kwargs.items():
+            if value in self.converters[key].keys():
+                self.units[key] = value
+            else:
+                msg = (
+                    'The unit ' + str(value) + ' is not available for the '
+                    'fluid property ' + self.properties[key] + '.')
+                raise ValueError(msg)
 
     def save(self, filename='FluidPropertyDiagram.pdf', **kwargs):
-        """Short summary.
+        """Save the diagram.
 
         Parameters
         ----------
-        filename : type
-            Description of parameter `filename`.
-        **kwargs : type
-            Description of parameter `**kwargs`.
+        filename : str
+            Path for the exported diagram. The file extension determines the
+            file format of the diagram. Available formats are the standard
+            matplotlib formats.
+
+        kwargs : misc
+            Keyword arguments of the :code:`matplotlib.figure.Figure.savefig`
+            method.
         """
         self.ax.set_xlim([self.x_min, self.x_max])
         self.ax.set_ylim([self.y_min, self.y_max])
@@ -362,20 +474,25 @@ class FluidPropertyDiagram:
         self.fig.savefig(filename, **kwargs)
 
     def draw_isoline_label(self, isoline, property, idx, x, y):
-        """Short summary.
+        """Draw a label for an isoline.
 
         Parameters
         ----------
-        isoline : type
-            Description of parameter `isoline`.
-        property : type
-            Description of parameter `property`.
-        idx : type
-            Description of parameter `idx`.
-        x : type
-            Description of parameter `x`.
-        y : type
-            Description of parameter `y`.
+        isoline : float
+            Value of the isoline.
+
+        property : str
+            Fluid property of the isoline.
+
+        idx : float
+            Index in the array holding the isoline data, where the label
+            should be plotted.
+
+        x : ndarray
+            x-values of the isoline.s
+
+        y : ndarray
+            y-values of the isoline.s
         """
         if idx > len(x):
             return
@@ -421,7 +538,7 @@ class FluidPropertyDiagram:
             bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
 
     def calc_isolines(self):
-        """Short summary."""
+        """Calculate all isolines."""
         self.isobar()
         self.isochor()
         self.isoquality()
@@ -430,7 +547,7 @@ class FluidPropertyDiagram:
         self.isoentropy()
 
     def isobar(self):
-        """Short summary."""
+        """Calculate an isoline of constant pressure."""
         isolines = self.pressure['isolines']
 
         for p in isolines.round(8):
@@ -470,7 +587,7 @@ class FluidPropertyDiagram:
                         self.pressure[p]['p'], idx, s)
 
     def isochor(self):
-        """Short summary."""
+        """Calculate an isoline of constant specific volume."""
         isolines = self.volume['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 100)
@@ -514,7 +631,7 @@ class FluidPropertyDiagram:
                     continue
 
     def isoquality(self):
-        """Short summary."""
+        """Calculate an isoline of constant vapor mass fraction."""
         isolines = self.quality['isolines']
 
         iterator = np.append(
@@ -542,7 +659,7 @@ class FluidPropertyDiagram:
             self.quality[Q]['T'] = np.asarray(self.quality[Q]['T'])
 
     def isoenthalpy(self):
-        """Short summary."""
+        """Calculate an isoline of constant specific enthalpy."""
         isolines = self.enthalpy['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 100)
@@ -587,7 +704,7 @@ class FluidPropertyDiagram:
                     continue
 
     def isotherm(self):
-        """Short summary."""
+        """Calculate an isoline of constant temperature."""
         isolines = self.temperature['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 300)
@@ -634,7 +751,7 @@ class FluidPropertyDiagram:
                         continue
 
     def isoentropy(self):
-        """Short summary."""
+        """Calculate an isoline of constant specific entropy."""
         isolines = self.entropy['isolines']
 
         iterator = np.geomspace(self.p_trip, self.p_max, 200)
@@ -659,15 +776,25 @@ class FluidPropertyDiagram:
             self.entropy[s]['s'] = np.asarray(self.entropy[s]['s'])
             self.entropy[s]['h'] = np.asarray(self.entropy[s]['h'])
 
-    def draw_isolines(self, diagram_type, isoline_data=None):
-        """Short summary.
+    def draw_isolines(self, diagram_type, isoline_data={}):
+        """Draw the isolines of a specific diagram type.
 
         Parameters
         ----------
-        diagram_type : type
-            Description of parameter `diagram_type`.
-        isoline_data : type
-            Description of parameter `isoline_data`.
+        diagram_type : str
+            Which type of diagram should be drawn.
+
+        isoline_data : dict
+            Dictionary holding additional data on the isolines to be drawn.
+            These are
+
+            - the isoline values with key :code:`values` and
+            - the isoline style with key :code:`style`.
+
+            The islonline style is another dictionary holding keyword arguments
+            of a :code:`matplotlib.lines.Line2D` object. See
+            https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            for more information.
         """
         if not isinstance(diagram_type, str):
             msg = (
@@ -696,16 +823,10 @@ class FluidPropertyDiagram:
             y_property + ' in ' +
             beautiful_unit_string(self.units[y_property]))
 
-        if isoline_data is None:
-            isolines = [
-                x for x in self.properties.keys()
-                if x not in [x_property, y_property]
-            ]
-        elif not isinstance(isoline_data, dict):
-            msg = ('The keyword isolines must either be a dictionary or None.')
-            raise TypeError(msg)
-        else:
-            isolines = isoline_data.keys()
+        isolines = [
+            x for x in self.properties.keys()
+            if x not in [x_property, y_property]
+        ]
 
         for isoline in isolines:
 
@@ -718,7 +839,7 @@ class FluidPropertyDiagram:
 
             isovalues = data['isolines']
 
-            if isoline_data is not None:
+            if isoline in isoline_data.keys():
                 if 'style' in isoline_data[isoline].keys():
                     data['style'].update(isoline_data[isoline]['style'])
 
@@ -732,11 +853,10 @@ class FluidPropertyDiagram:
                             isoline_data[isoline]['values'] * isoline_conv)
 
             for isoval in isovalues.round(8):
-                if isoval not in data.keys():
+                if isoval not in data['isolines']:
                     msg = (
                         'Could not find data for ' + property + ' isoline '
                         'with value: ' + str(isoval) + '.')
-                    print(msg)
                     continue
 
                 if x_property == 'T':
