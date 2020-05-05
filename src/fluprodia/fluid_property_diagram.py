@@ -110,7 +110,7 @@ class FluidPropertyDiagram:
     Now we can calculate the diagram data and export after that. If you want to
     plot additional data on the diagram (e.g. measurement data from a
     thermodynamic process) you can do this on the :code:`diagram.ax` object. It
-    is an :code:`matplotlib.axes._subplots.AxesSubplot` object and therefore
+    is a :code:`matplotlib.axes._subplots.AxesSubplot` object and therefore
     you can apply standard matplotlib methods. The figure of the plot can be
     accessed via :code:`diagram.fig`
 
