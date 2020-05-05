@@ -1,31 +1,99 @@
+fluprodia========
+Overview
+========
+
+.. start-badges
+
+.. list-table::
+    :stub-columns: 1
+
+    * - docs
+      - |docs|
+    * - tests
+      - | |travis|
+        | |coveralls|
+    * - package
+      - | |version| |wheel| |supported-versions| |supported-implementations|
+        | |commits-since|
+.. |docs| image:: https://readthedocs.org/projects/fluprodia/badge/?style=flat
+    :target: https://readthedocs.org/projects/fluprodia
+    :alt: Documentation Status
+
+.. |travis| image:: https://api.travis-ci.org/fwitte/fluprodia.svg?branch=master
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/fwitte/fluprodia
+
+.. |coveralls| image:: https://coveralls.io/repos/fwitte/fluprodia/badge.svg?branch=master&service=github
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/fwitte/fluprodia
+
+.. |version| image:: https://img.shields.io/pypi/v/fluprodia.svg
+    :alt: PyPI Package latest release
+    :target: https://pypi.org/project/fluprodia
+
+.. |wheel| image:: https://img.shields.io/pypi/wheel/fluprodia.svg
+    :alt: PyPI Wheel
+    :target: https://pypi.org/project/fluprodia
+
+.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/fluprodia.svg
+    :alt: Supported versions
+    :target: https://pypi.org/project/fluprodia
+
+.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/fluprodia.svg
+    :alt: Supported implementations
+    :target: https://pypi.org/project/fluprodia
+
+.. |commits-since| image:: https://img.shields.io/github/commits-since/fwitte/fluprodia/v0.0.1.svg
+    :alt: Commits since latest release
+    :target: https://github.com/fwitte/fluprodia/compare/v0.0.1...master
+
+
+
+.. end-badges
+
+Creating Fluid Proprety Diagrams using CoolProp
+
+* Free software: MIT license
+
 Installation
 ============
 
-Usage
-=====
+::
+
+    pip install fluprodia
+
+You can also install the in-development version with::
+
+    pip install https://github.com/fwitte/fluprodia/archive/master.zip
+
 
 Documentation
 =============
 
-License
-=======
 
-Copyright (c) 2020 Francesco Witte
+https://fluprodia.readthedocs.io/
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Development
+===========
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+To run the all tests run::
+
+    tox
+
+Note, to combine the coverage data from all the tox environments run:
+
+.. list-table::
+    :widths: 10 90
+    :stub-columns: 1
+
+    - - Windows
+      - ::
+
+            set PYTEST_ADDOPTS=--cov-append
+            tox
+
+    - - Other
+      - ::
+
+            PYTEST_ADDOPTS=--cov-append tox

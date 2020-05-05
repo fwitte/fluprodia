@@ -26,7 +26,7 @@ def isolines_log(val_min, val_max):
     return arr[(arr >= val_min) & (arr <= val_max)]
 
 
-class StatesDiagram:
+class FluidPropertyDiagram:
 
     def __init__(self, fluid, width=16, height=10):
         self.state = CP.AbstractState('HEOS', fluid)
@@ -72,6 +72,12 @@ class StatesDiagram:
                 'x_property': 'h',
                 'y_property': 'T',
                 'x_scale': 'linear',
+                'y_scale': 'linear'
+            },
+            'plogv': {
+                'x_property': 'v',
+                'y_property': 'p',
+                'x_scale': 'log',
                 'y_scale': 'linear'
             }
         }
@@ -415,7 +421,7 @@ class StatesDiagram:
     def isotherm(self):
         isolines = self.temperature['isolines']
 
-        iterator = np.geomspace(self.p_trip, self.p_max, 100)
+        iterator = np.geomspace(self.p_trip, self.p_max, 300)
 
         for T in isolines.round(8):
             self.temperature[T] = {
@@ -461,7 +467,10 @@ class StatesDiagram:
     def isoentropy(self):
         isolines = self.entropy['isolines']
 
-        iterator = np.geomspace(self.p_trip, self.p_max, 100)
+        iterator = np.geomspace(self.p_trip, self.p_max, 200)
+
+        self.state.update(CP.PT_INPUTS, self.p_crit, self.T_crit)
+        s_crit = self.state.smass()
 
         for s in isolines.round(8):
             self.entropy[s] = {
