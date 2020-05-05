@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 import os
 import traceback
-from pkg_resources import get_distribution
+import fluprodia
 
 extensions = [
     'sphinx.ext.autodoc',
@@ -22,7 +22,7 @@ year = '2020'
 author = 'Francesco Witte'
 copyright = '{0}, {1}'.format(year, author)
 
-version = release = get_distribution('fluprodia').version
+version = release = fluprodia.__version__
 
 pygments_style = 'trac'
 templates_path = ['.']
