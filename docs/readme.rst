@@ -19,16 +19,28 @@ Installation and Usage
 
     from fluprodia import FluidPropertyDiagram
 
-    diagram = FluidPropertyDiagram(fluid='NH3')
+    diagram = FluidPropertyDiagram(fluid='H2O')
+    diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
     diagram.calc_isolines()
-    diagram.set_limits(x_min=0, x_max=7000, y_min=200, y_max=450)
+    diagram.set_limits(x_min=0, x_max=8000, y_min=0, y_max=700)
     diagram.draw_isolines(diagram_type='Ts')
-    diagram.save('Ts_Diagramm.pdf')
-
-.. figure:: reference/_images/logph_diagram_NH3.svg
-    :align: center
+    diagram.save('Ts_diagram_H2O.svg')
+    diagram.save('Ts_diagram_H2O.png', dpi=300)
 
 .. figure:: reference/_images/Ts_diagram_H2O.svg
+    :align: center
+
+.. code-block:: python
+
+    diagram = FluidPropertyDiagram(fluid='NH3')
+    diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
+    diagram.calc_isolines()
+    diagram.set_limits(x_min=0, x_max=2000, y_min=1e-1, y_max=2e2)
+    diagram.draw_isolines(diagram_type='logph')
+    diagram.save('logph_diagram_NH3.png', dpi=300)
+    diagram.save('logph_diagram_NH3.svg')
+
+.. figure:: reference/_images/logph_diagram_NH3.svg
     :align: center
 
 Citation
