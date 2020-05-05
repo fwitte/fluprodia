@@ -37,7 +37,7 @@ setup(
         re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
     ),
     author='Francesco Witte',
-    author_email='tespy@witte.sh',
+    author_email='fluprodia@witte.sh',
     url='https://github.com/fwitte/fluprodia',
     packages=['fluprodia'],
     package_dir={'': 'src'},
