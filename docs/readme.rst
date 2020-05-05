@@ -36,7 +36,7 @@ Citation
 
 Every version of fluprodia is archived at zenodo. You can cite the latest or
 a specific version. For citation info and more details please go to the
-`zenodo entry <>`_ of fluprodia.
+`zenodo entry <https://zenodo.org/>`_ of fluprodia.
 
 References
 ==========
