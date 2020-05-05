@@ -11,7 +11,6 @@ from os.path import dirname
 from os.path import join
 from os.path import splitext
 
-from setuptools import find_packages
 from setuptools import setup
 
 
