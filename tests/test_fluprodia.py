@@ -1,5 +1,5 @@
 
-from fluprodia import FluidPropertyDiagram
+# from fluprodia import FluidPropertyDiagram
 
 
 def test_main():

@@ -1,6 +1,6 @@
-import numpy as np
 import CoolProp as CP
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def beautiful_unit_string(unit):
