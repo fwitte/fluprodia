@@ -38,7 +38,7 @@ setup(
     author='Francesco Witte',
     author_email='fluprodia@witte.sh',
     url='https://github.com/fwitte/fluprodia',
-    packages=['fluprodia'],
+    packages=['fluprodia', 'fluprodia.fluid_property_diagram'],
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
     include_package_data=True,
