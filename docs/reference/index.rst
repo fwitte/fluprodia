@@ -1,5 +1,5 @@
-Reference
-=========
+API
+===
 
 .. automodule:: fluprodia.fluid_property_diagram
     :members:
