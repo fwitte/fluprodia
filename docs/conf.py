@@ -3,6 +3,11 @@ from __future__ import unicode_literals
 import os
 import traceback
 import fluprodia
+from diagrams import generate_diagrams
+
+
+generate_diagrams()
+
 
 extensions = [
     'sphinx.ext.autodoc',
