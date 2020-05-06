@@ -25,11 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='fluprodia',
-    use_scm_version={
-        'local_scheme': 'dirty-tag',
-        'write_to': 'src/fluprodia/_version.py',
-        'fallback_version': '0.0.1',
-    },
+    version='0.1.0',
     license='MIT',
     description='Creating Fluid Proprety Diagrams using CoolProp',
     long_description='%s\n%s' % (
