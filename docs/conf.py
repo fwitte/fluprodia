@@ -58,7 +58,7 @@ diagram.set_limits(x_min=0, x_max=8000, y_min=-50, y_max=200)
 diagram.draw_isolines('Ts')
 diagram.save('reference/_images/Ts_diagram.svg')
 
-diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=1e2)
+diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
 diagram.draw_isolines('logph')
 diagram.save('reference/_images/logph_diagram.svg')
 

@@ -61,7 +61,7 @@ call, you need to recalculate the isolines.
 
 .. code-block:: python
 
-	diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=1e2)
+	diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
 	diagram.draw_isolines('logph')
 	diagram.save('logph_diagram.svg')
 
