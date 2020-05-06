@@ -23,6 +23,7 @@ fluprodia is licensed under the MIT software license.
     * - package
       - | |version| |wheel|
         | |supported-versions|
+        | |zenodo|
 
 .. |docs| image:: https://readthedocs.org/projects/fluprodia/badge/?style=flat
     :target: https://readthedocs.org/projects/fluprodia
@@ -47,6 +48,10 @@ fluprodia is licensed under the MIT software license.
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/fluprodia.svg
     :alt: Supported versions
     :target: https://pypi.org/project/fluprodia
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3795771.svg
+    :alt: Zenodo
+    :target: https://doi.org/10.5281/zenodo.3795771
 
 .. end-badges
 
@@ -96,7 +101,7 @@ Citation
 
 Every version of fluprodia is archived at zenodo. You can cite the latest or
 a specific version. For citation info and more details please go to the
-`zenodo entry <https://zenodo.org/>`_ of fluprodia.
+`zenodo entry <https://zenodo.org/record/3795771>`_ of fluprodia.
 
 References
 ==========
