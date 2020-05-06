@@ -494,10 +494,8 @@ class FluidPropertyDiagram:
         y : ndarray
             y-values of the isoline.s
         """
-        if idx > len(x):
-            return
-
-        if (x[idx] > self.x_max or x[idx] < self.x_min or
+        if (idx > len(x) or
+                x[idx] > self.x_max or x[idx] < self.x_min or
                 y[idx] > self.y_max or y[idx] < self.y_min or
                 x[idx - 1] > self.x_max or x[idx - 1] < self.x_min or
                 y[idx - 1] > self.y_max or y[idx - 1] < self.y_min):
@@ -662,7 +660,7 @@ class FluidPropertyDiagram:
         """Calculate an isoline of constant specific enthalpy."""
         isolines = self.enthalpy['isolines']
 
-        iterator = np.geomspace(self.p_trip, self.p_max, 100)
+        iterator = np.geomspace(self.p_trip, self.p_max, 200)
 
         for h in isolines.round(8):
             self.enthalpy[h] = {
@@ -683,25 +681,6 @@ class FluidPropertyDiagram:
             self.enthalpy[h]['v'] = np.asarray(self.enthalpy[h]['v'])
             self.enthalpy[h]['s'] = np.asarray(self.enthalpy[h]['s'])
             self.enthalpy[h]['h'] = np.asarray(self.enthalpy[h]['h'])
-
-            for Q in [0, 1]:
-                try:
-                    self.state.update(CP.HmassQ_INPUTS, h, Q)
-                    s = self.state.smass()
-
-                    idx = np.searchsorted(self.enthalpy[h]['s'], s)
-                    self.enthalpy[h]['h'] = np.insert(
-                        self.enthalpy[h]['h'], idx, h)
-                    self.enthalpy[h]['T'] = np.insert(
-                        self.enthalpy[h]['T'], idx, self.state.T())
-                    self.enthalpy[h]['p'] = np.insert(
-                        self.enthalpy[h]['p'], idx, self.state.p())
-                    self.enthalpy[h]['s'] = np.insert(
-                        self.enthalpy[h]['s'], idx, s)
-                    self.enthalpy[h]['v'] = np.insert(
-                        self.enthalpy[h]['v'], idx, 1 / self.state.rhomass())
-                except ValueError:
-                    continue
 
     def isotherm(self):
         """Calculate an isoline of constant temperature."""
@@ -730,7 +709,7 @@ class FluidPropertyDiagram:
             self.temperature[T]['h'] = np.asarray(self.temperature[T]['h'])
 
             if T <= self.T_crit:
-                for Q in [0, 1]:
+                for Q in np.linspace(0, 1, 41):
                     try:
                         self.state.update(CP.QT_INPUTS, Q, T)
                         p = self.state.p()
@@ -840,17 +819,24 @@ class FluidPropertyDiagram:
             isovalues = data['isolines']
 
             if isoline in isoline_data.keys():
-                if 'style' in isoline_data[isoline].keys():
+                keys = isoline_data[isoline].keys()
+                if 'style' in keys:
                     data['style'].update(isoline_data[isoline]['style'])
 
-                if 'values' in isoline_data[isoline].keys():
+                if 'values' in keys:
                     if isoline == 'T':
                         isovalues = (
-                            isoline_data[isoline]['values'] / isoline_conv[1] -
-                            isoline_conv[0])
+                            (isoline_data[isoline]['values'] +
+                                isoline_conv[0]) /
+                            isoline_conv[1])
+
                     else:
                         isovalues = (
                             isoline_data[isoline]['values'] * isoline_conv)
+
+                if 'label_position' in keys:
+                    data['label_position'] = (
+                        isoline_data[isoline]['label_position'])
 
             for isoval in isovalues.round(8):
                 if isoval not in data['isolines']:
@@ -894,18 +880,11 @@ class FluidPropertyDiagram:
 
                 self.ax.plot(x, y, **data['style'])
 
-                num_points = len(indices)
+                if isoline == 'T':
+                    isoval = isoval / isoline_conv[1] - isoline_conv[0]
+                else:
+                    isoval /= isoline_conv
 
-                if num_points > 1:
-                    if isoline == 'T':
-                        isoval = isoval / isoline_conv[1] - isoline_conv[0]
-                    else:
-                        isoval /= isoline_conv
-
-                    if num_points < 5:
-                        self.draw_isoline_label(
-                            isoval.round(8), isoline, num_points - 2, x, y)
-                    else:
-                        self.draw_isoline_label(
-                            isoval.round(8), isoline,
-                            int(data['label_position'] * len(x)), x, y)
+                self.draw_isoline_label(
+                    isoval.round(8), isoline,
+                    int(data['label_position'] * len(x)), x, y)
