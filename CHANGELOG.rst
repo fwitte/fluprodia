@@ -3,7 +3,7 @@ Changelog
 =========
 
 v0.1.1 (May, 13, 2020)
----------------------
+----------------------
 
 * Catch exceptions in calculation of minimum specific volume for default
   isoline generation.
