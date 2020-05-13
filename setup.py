@@ -50,6 +50,7 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Utilities',
     ],
     project_urls={
@@ -60,9 +61,9 @@ setup(
     keywords=[
         'Fluid Property Diagrams', 'CoolProp', 'TESPy',
     ],
-    python_requires='>=3.6.*,<3.8',
+    python_requires='>=3.6.*,<3.9',
     install_requires=[
-        'CoolProp>=6,<7',
+        'CoolProp>=6.4,<7',
         'matplotlib>=3.2,<4',
         'numpy>=1.13.3,<2'
     ]

@@ -14,8 +14,11 @@ matrix:
         - TOXENV=py36-cover
       python: '3.6'
     - env:
-        - TOXENV=py37-cover,coveralls
+        - TOXENV=py37-cover
       python: '3.7'
+    - env:
+        - TOXENV=py38-cover,coveralls
+      python: '3.8'
 before_install:
   - python --version
   - uname -a
