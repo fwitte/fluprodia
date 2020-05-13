@@ -351,7 +351,14 @@ class FluidPropertyDiagram:
         self.s_max = self.state.smass()
         self.h_max = self.state.hmass()
         self.iterator = np.linspace(0, self.s_max, 100)
-        self.state.update(CP.PT_INPUTS, self.p_max, self.T_trip)
+        p = self.p_max
+        while True:
+            try:
+                self.state.update(CP.PT_INPUTS, p, self.T_trip)
+                break
+            except ValueError:
+                p *= 0.999
+
         self.v_min = 1 / self.state.rhomass()
 
         self.p_crit = self.state.trivial_keyed_output(CP.iP_critical)
