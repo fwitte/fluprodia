@@ -379,7 +379,7 @@ class FluidPropertyDiagram:
         self.enthalpy['isolines'] = np.arange(0, self.h_max, step).round(8)
 
         self.pressure['isolines'] = isolines_log(
-            self.p_trip, self.p_max).round(8)
+            self.p_trip + 1e-2, self.p_max).round(8)
         self.volume['isolines'] = isolines_log(self.v_min, self.v_max).round(8)
 
     def set_limits(self, **kwargs):
@@ -502,6 +502,7 @@ class FluidPropertyDiagram:
             y-values of the isoline.s
         """
         if (idx > len(x) or
+                idx == 0 or
                 x[idx] > self.x_max or x[idx] < self.x_min or
                 y[idx] > self.y_max or y[idx] < self.y_min or
                 x[idx - 1] > self.x_max or x[idx - 1] < self.x_min or
@@ -595,7 +596,9 @@ class FluidPropertyDiagram:
         """Calculate an isoline of constant specific volume."""
         isolines = self.volume['isolines']
 
-        iterator = np.geomspace(self.p_trip, self.p_max, 100)
+        iterator = np.append(
+            np.geomspace(self.p_trip, self.p_crit * 0.9, 100, endpoint=False),
+            np.geomspace(self.p_crit * 0.9, self.p_max, 100))
 
         for v in isolines.round(8):
             self.volume[v] = {'h': [], 'T': [], 'p': [], 's': [], 'v': []}
@@ -616,9 +619,9 @@ class FluidPropertyDiagram:
             self.volume[v]['s'] = np.asarray(self.volume[v]['s'])
             self.volume[v]['v'] = np.asarray(self.volume[v]['v'])
 
-            for Q in [0, 1]:
+            if v > self.v_crit:
                 try:
-                    self.state.update(CP.DmassQ_INPUTS, 1 / v, Q)
+                    self.state.update(CP.DmassQ_INPUTS, 1 / v, 1)
                     val = self.state.p()
 
                     idx = np.searchsorted(self.volume[v]['p'], val)
