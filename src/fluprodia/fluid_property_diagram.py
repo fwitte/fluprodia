@@ -765,6 +765,54 @@ class FluidPropertyDiagram:
             self.entropy[s]['s'] = np.asarray(self.entropy[s]['s'])
             self.entropy[s]['h'] = np.asarray(self.entropy[s]['h'])
 
+    def draw_individual_isoline(
+            self, diagram_type=None, line_type=None, line_value=None,
+            line_styling={}, starting_property={}, ending_property={}):
+        """Draw an individual isoline within a specific diagram type.
+
+        Pass the isoline type, its value in the diagrams unit system, as well
+        as the start and the endpoint of the line. Styling can be changed
+        using the line_style property.
+
+        Parameters
+        ----------
+        diagram_type : str
+            Which type of diagram are the lines drawn into.
+
+        line_type : str
+            Type of the isoline. Choose from :code:`line_type='...'`:
+
+            - :code:`'isobar'` or :code:`'p'`
+            - :code:`'isochor'` or :code:`'v'`
+            - :code:`'isotherm'` or :code:`'T'`
+            - :code:`'isenthalp'` or :code:`'h'`
+            - :code:`'isentropic'` or :code:`'s'`
+
+        line_value : float
+            Value of the isoline specified in the respective unit.
+
+        isoline_style : dict
+            Dictionary holding the styling information of isoline to
+            be drawn. The dictionary holds keyword arguments of a
+            :code:`matplotlib.lines.Line2D` object. See
+            https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            for more information. This parameter is optional.
+
+        starting_property : dict
+            Dictionary holding the starting property and its value in the
+            unit used for plotting the diagram, e.g.
+            :code:`starting_property{'p': 1e5}`
+
+        ending_property : dict
+            Dictionary holding the ending property and its value in the
+            unit used for plotting the diagram, e.g.
+            :code:`ending_property{'p': 1e4}`
+
+        Example
+        -------
+        A full example can be found in the class documentation.
+        """
+
     def draw_isolines(self, diagram_type, isoline_data={}):
         """Draw the isolines of a specific diagram type.
 
