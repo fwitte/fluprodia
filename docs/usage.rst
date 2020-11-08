@@ -371,7 +371,9 @@ and a Ts diagram.
     :align: center
 
 The script to generate the results is the following code snippet. Just add it
-into your plotting code and it will create the results shown.
+into your plotting code and it will create the results shown. An interface
+automatically generating a dictionary for every component of the network is
+planned in future versions of TESPy.
 
 .. code-block:: python
 
