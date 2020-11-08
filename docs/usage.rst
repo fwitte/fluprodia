@@ -250,6 +250,14 @@ diagram's respective unit system.
     for name, specs in data.items():
         data[name]['datapoints'] = diagram.calc_individual_isoline(**specs)
 
+With these data, it is possible to plot to your diagram simply by plotting on
+the :code:`diagram.ax` object, which is a
+:code:`matplotlib.axes._subplots.AxesSubplot` object. Therefore all matplolib
+plotting functionalities are available. Simply pass the data of the x and y
+property of your diagram, e.g. to the :code:`plot()` method.
+
+.. code-block:: python
+
     diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
     mydata = {
         'Q': {'values': np.linspace(0, 1, 11)},
@@ -272,7 +280,7 @@ diagram's respective unit system.
 .. figure:: reference/_images/logph_NH3_isolines.svg
     :align: center
 
-.. figure:: reference/_images/logph_Ts_isolines.svg
+.. figure:: reference/_images/Ts_NH3_isolines.svg
     :align: center
 
 .. note::
@@ -289,7 +297,10 @@ change in entropy (for isobars and isothermals) or change in pressure (for all
 other lines). This functionality is only supposed to display the change in a
 beautiful way, it does not represent the actual process connecting your
 starting point with your ending point as this would require perfect knowledge
-of the process.
+of the process. In order to generate these data, you need to pass the
+:code:`'isoline_value_end'` keyword to the
+:py:meth:`fluprodia.fluid_property_diagram.FluidPropertyDiagram.calc_individual_isoline`
+method.
 
 .. code-block:: python
 
@@ -311,12 +322,6 @@ of the process.
 .. figure:: reference/_images/Ts_NH3_pressure_loss.svg
     :align: center
 
-With these data, it is possible to plot to your diagram simply by plotting on
-the :code:`diagram.ax` object, which is a
-:code:`matplotlib.axes._subplots.AxesSubplot` object. Therefore all matplolib
-plotting functionalities are available. Simply pass the data of the x and y
-property of your diagrame, e.g. to the :code:`plot()` method.
-
 Plotting States into the Diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -326,7 +331,7 @@ connected states, you will need the :code:`plot()` method. In this example, we
 will plot from a simple heat pump simulation in TESPy [1]_ (for more
 information on TESPy see the
 `online documentation <https://tespy.readthedocs.io/en/master>`_) into a logph
-diagram.
+and a Ts diagram.
 
 .. code-block:: python
 
@@ -360,6 +365,9 @@ diagram.
     diagram.save('Ts_diagram_states.svg')
 
 .. figure:: reference/_images/logph_diagram_states.svg
+    :align: center
+
+.. figure:: reference/_images/Ts_diagram_states.svg
     :align: center
 
 The script to generate the results is the following code snippet. Just add it
