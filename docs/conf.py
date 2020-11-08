@@ -33,8 +33,8 @@ def run_simple_heat_pump_model():
 
     nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
 
-    cd.set_attr(pr=1, Q=-1e6)
-    ev.set_attr(pr=1)
+    cd.set_attr(pr=0.95, Q=-1e6)
+    ev.set_attr(pr=0.9)
     cp.set_attr(eta_s=0.9)
 
     cc_cd.set_attr(fluid={'NH3': 1})
@@ -43,8 +43,42 @@ def run_simple_heat_pump_model():
     nw.solve('design')
 
     result_dict = {
-        prop: [conn.get_attr(prop).val for conn in nw.conns.index]
-        for prop in ['p', 'h']
+        'compressor': {
+            'isoline_type': 's',
+            'isoline_value': ev_cp.s.val,
+            'isoline_value_end': cp_cc.s.val,
+            'starting_point_property': 'p',
+            'starting_point_value': ev_cp.p.val,
+            'ending_point_property': 'p',
+            'ending_point_value': cp_cc.p.val
+        },
+        'condenser': {
+            'isoline_type': 'p',
+            'isoline_value': cc_cd.p.val,
+            'isoline_value_end': cd_va.p.val,
+            'starting_point_property': 's',
+            'starting_point_value': cc_cd.s.val,
+            'ending_point_property': 's',
+            'ending_point_value': cd_va.s.val
+        },
+        'valve': {
+            'isoline_type': 'h',
+            'isoline_value': cd_va.h.val,
+            'isoline_value_end': va_ev.h.val,
+            'starting_point_property': 'p',
+            'starting_point_value': cd_va.p.val,
+            'ending_point_property': 'p',
+            'ending_point_value': va_ev.p.val
+        },
+        'evaporator': {
+            'isoline_type': 'p',
+            'isoline_value': va_ev.p.val,
+            'isoline_value_end': ev_cp.p.val,
+            'starting_point_property': 's',
+            'starting_point_value': va_ev.s.val,
+            'ending_point_property': 's',
+            'ending_point_value': ev_cp.s.val
+        }
     }
     return result_dict
 
@@ -97,17 +131,30 @@ mydata = {
 diagram.draw_isolines('logph', isoline_data=mydata)
 diagram.save('reference/_images/logph_NH3_zoomed_temperature_labels.svg')
 
+tespy_results = run_simple_heat_pump_model()
+for key, data in tespy_results.items():
+    tespy_results[key]['datapoints'] = diagram.calc_individual_isoline(**data)
+
 diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
 mydata = {
     'Q': {'values': np.linspace(0, 1, 11)},
     'T': {'values': np.arange(-50, 201, 25)}}
 diagram.draw_isolines('logph', isoline_data=mydata)
 
-tespy_results = run_simple_heat_pump_model()
-
-diagram.ax.scatter(tespy_results['h'], tespy_results['p'])
-diagram.ax.plot(tespy_results['h'], tespy_results['p'])
+for key in tespy_results.keys():
+    datapoints = tespy_results[key]['datapoints']
+    diagram.ax.plot(datapoints['h'], datapoints['p'], color='#ff0000')
+    diagram.ax.scatter(datapoints['h'][0], datapoints['p'][0], color='#ff0000')
 diagram.save('reference/_images/logph_diagram_states.svg')
+
+diagram.set_limits(x_min=0, x_max=8000, y_min=-50, y_max=200)
+diagram.draw_isolines('Ts')
+
+for key in tespy_results.keys():
+    datapoints = tespy_results[key]['datapoints']
+    diagram.ax.plot(datapoints['s'], datapoints['T'], color='#ff0000')
+    diagram.ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
+diagram.save('reference/_images/Ts_diagram_states.svg')
 
 
 extensions = [
