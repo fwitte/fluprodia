@@ -728,45 +728,82 @@ class FluidPropertyDiagram:
             if starting_point_property == 's':
                 entropy_start = starting_point_value
             else:
-                prop = self.CoolProp_inputs[starting_point_property]
-                inputpair = CP.CoolProp.generate_update_pair(
-                    prop, starting_point_value, isoline_prop, isoline_value
-                )
-                self.state.update(*inputpair)
-                entropy_start = self.state.smass()
+                if starting_point_property == 'v':
+                    entropy_start = CP.CoolProp.PropsSI(
+                        'S', 'D', starting_point_value, isoline_property.upper(),
+                        isoline_value, self.fluid
+                    )
+                else:
+                    entropy_start = CP.CoolProp.PropsSI(
+                        'S', starting_point_property.upper(),
+                        starting_point_value, isoline_property.upper(),
+                        isoline_value, self.fluid
+                    )
 
             if ending_point_property == 's':
                 entropy_end = ending_point_value
             else:
-                prop = self.CoolProp_inputs[ending_point_property]
-                inputpair = CP.CoolProp.generate_update_pair(
-                    prop, ending_point_value, isoline_prop, isoline_value_end
-                )
-                self.state.update(*inputpair)
-                entropy_end = self.state.smass()
+                if ending_point_property == 'v':
+                    entropy_end = CP.CoolProp.PropsSI(
+                        'S', 'D', ending_point_value, isoline_property.upper(),
+                        isoline_value_end, self.fluid
+                    )
+                else:
+                    entropy_end = CP.CoolProp.PropsSI(
+                        'S', ending_point_property.upper(),
+                        ending_point_value, isoline_property.upper(),
+                        isoline_value_end, self.fluid
+                    )
 
             iterator = np.linspace(entropy_start, entropy_end, 100)
+
         else:
 
             if starting_point_property == 'p':
                 pressure_start = starting_point_value
             else:
-                prop = self.CoolProp_inputs[starting_point_property]
-                inputpair = CP.CoolProp.generate_update_pair(
-                    prop, starting_point_value, isoline_prop, isoline_value
-                )
-                self.state.update(*inputpair)
-                pressure_start = self.state.p()
+                if isoline_property == 'v':
+                    pressure_start = CP.CoolProp.PropsSI(
+                        'P', starting_point_property.upper(),
+                        starting_point_value, 'D', isoline_value, self.fluid
+                    )
+                else:
+                    if starting_point_property == 'v':
+                        pressure_start = CP.CoolProp.PropsSI(
+                            'P', 'D', starting_point_value,
+                            isoline_property.upper(),
+                            isoline_value, self.fluid
+                        )
+                    else:
+                        pressure_start = CP.CoolProp.PropsSI(
+                            'P', starting_point_property.upper(),
+                            starting_point_value, isoline_property.upper(),
+                            isoline_value, self.fluid
+                        )
 
             if ending_point_property == 'p':
                 pressure_end = ending_point_value
             else:
-                prop = self.CoolProp_inputs[ending_point_property]
-                inputpair = CP.CoolProp.generate_update_pair(
-                    prop, ending_point_value, isoline_prop, isoline_value
-                )
-                self.state.update(*inputpair)
-                pressure_end = self.state.p()
+                if isoline_property == 'v':
+                    pressure_end = CP.CoolProp.PropsSI(
+                        'P', ending_point_property.upper(),
+                        ending_point_value, 'D', isoline_value_end,
+                        self.fluid
+                    )
+                else:
+                    if ending_point_property == 'v':
+                        pressure_end = CP.CoolProp.PropsSI(
+                            'P', 'D', ending_point_value,
+                            isoline_property.upper(),
+                            isoline_value_end, self.fluid
+                        )
+
+                    else:
+                        pressure_end = CP.CoolProp.PropsSI(
+                            'P', ending_point_property.upper(),
+                            ending_point_value, isoline_property.upper(),
+                            isoline_value_end, self.fluid
+                        )
 
             iterator = np.geomspace(pressure_start, pressure_end, 100)
 
@@ -776,7 +813,6 @@ class FluidPropertyDiagram:
 
         for key in datapoints.keys():
             datapoints[key] = self.convert_from_SI(datapoints[key], key)
-
         return datapoints
 
     def single_isobaric(self, iterator, p):
@@ -866,7 +902,18 @@ class FluidPropertyDiagram:
                 else:
                     datapoints['Q'] += [-1]
             except ValueError:
-                pass
+                # for some reason PropSI inputs are way more stable here
+                try:
+                    p = CP.CoolProp.PropsSI(
+                        'P', 'T', T[i], 'S', val, self.fluid)
+                    self.state.update(CP.PSmass_INPUTS, p, val)
+                    datapoints['T'] += [T[i]]
+                    datapoints['p'] += [p]
+                    datapoints['v'] += [1 / self.state.rhomass()]
+                    datapoints['s'] += [val]
+                    datapoints['h'] += [self.state.hmass()]
+                except ValueError as e:
+                    pass
             i += 1
 
         for key in datapoints.keys():
@@ -972,8 +1019,11 @@ class FluidPropertyDiagram:
         for Q, value in data.items():
             if property == 'v':
                 value = 1 / value
-            self.state.update(*CP.CoolProp.generate_update_pair(
-                self.CoolProp_inputs[property], value, CP.iQ, Q))
+            try:
+                self.state.update(*CP.CoolProp.generate_update_pair(
+                    self.CoolProp_inputs[property], value, CP.iQ, Q))
+            except ValueError:
+                continue
             s = self.state.smass()
 
             if rising is True:
