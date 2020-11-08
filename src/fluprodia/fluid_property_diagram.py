@@ -15,84 +15,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def newton(func, deriv, params, y, **kwargs):
-    r"""
-    Find zero crossings with 1-D newton algorithm.
-
-    Parameters
-    ----------
-    func : function
-        Function to find zero crossing in,
-        :math:`0=y-func\left(x,\text{params}\right)`.
-
-    deriv : function
-        First derivative of the function.
-
-    params : list
-        Additional parameters for function, optional.
-
-    y : float
-        Target function value.
-
-    val0 : float
-        Starting value, default: val0=300.
-
-    valmin : float
-        Lower value boundary, default: valmin=70.
-
-    valmax : float
-        Upper value boundary, default: valmax=3000.
-
-    max_iter : int
-        Maximum number of iterations, default: max_iter=10.
-
-    Returns
-    -------
-    val : float
-        x-value of zero crossing.
-
-    Note
-    ----
-    Algorithm
-
-    .. math::
-
-        x_{i+1} = x_{i} - \frac{f(x_{i})}{\frac{df}{dx}(x_{i})}\\
-        f(x_{i}) \leq \epsilon
-    """
-    # default valaues
-    x = kwargs.get('val0', 300)
-    valmin = kwargs.get('valmin', 70)
-    valmax = kwargs.get('valmax', 3000)
-    max_iter = kwargs.get('max_iter', 10)
-
-    # start newton loop
-    res = 1
-    i = 0
-    while abs(res) >= 1e-6:
-        # calculate function residual and new value
-        res = y - func(params, x)
-        x += res / deriv(params, x)
-
-        # check for value ranges
-        if x < valmin:
-            x = valmin
-        if x > valmax:
-            x = valmax
-        i += 1
-
-        if i > max_iter:
-            msg = ('Newton algorithm was not able to find a feasible value '
-                   'for function ' + str(func) + '. Current value with x=' +
-                   str(x) + ' is ' + str(func(params, x)) +
-                   ', target value is ' + str(y) + '.')
-            logging.debug(msg)
-
-            break
-
-    return x
-
-
 def beautiful_unit_string(unit):
     r"""Convert unit fractions to latex.
 
@@ -1210,15 +1132,3 @@ class FluidPropertyDiagram:
                 self.converters[property][self.units[property]][0])
         else:
             return value / self.converters[property][self.units[property]]
-
-    def find_Q_crossing(self, *args, p):
-        p1, p2, s1, s2, Q = args
-        self.state.update(CP.PQ_INPUTS, p, Q)
-        s = self.state.smass()
-        return (s - s1) / (s2 - s1) - ( - p1) / (p2 - p1)
-
-    def find_Q_crossing_deriv(self, *args, p):
-        d = 1
-        return (
-            self.find_Q_crossing(*args, p + d) -
-            self.find_Q_crossing(*args, p - d)) / (2 * d)
