@@ -721,8 +721,6 @@ class FluidPropertyDiagram:
         if ending_point_property == 'v':
             ending_point_value = 1 / ending_point_value
 
-        isoline_prop = self.CoolProp_inputs[isoline_property]
-
         if isoline_property == 'p' or isoline_property == 'T':
 
             if starting_point_property == 's':
