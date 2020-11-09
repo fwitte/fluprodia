@@ -912,7 +912,7 @@ class FluidPropertyDiagram:
                     datapoints['v'] += [1 / self.state.rhomass()]
                     datapoints['s'] += [val]
                     datapoints['h'] += [self.state.hmass()]
-                except ValueError as e:
+                except ValueError:
                     pass
             i += 1
 
@@ -1104,9 +1104,6 @@ class FluidPropertyDiagram:
 
             property = self.properties[isoline]
             data = getattr(self, property)
-            isoline_conv = self.converters[isoline][self.units[isoline]]
-            x_conv = self.converters[x_property][self.units[x_property]]
-            y_conv = self.converters[y_property][self.units[y_property]]
 
             isovalues = data['isolines']
 
