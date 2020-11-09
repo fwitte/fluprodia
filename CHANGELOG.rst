@@ -2,6 +2,22 @@
 Changelog
 =========
 
+v1.1 (Someday, Somemonth, Someyear)
+-----------------------------------
+
+* Update script for plotting data extraction from TESPy simulation.
+
+v1.0 (November, 8, 2020)
+------------------------
+
+* Add method to calculate datapoints of individual isolines and isolike lines.
+
+v0.1.2 (October, 2, 2020)
+-------------------------
+
+* Minor bug fixes for isochoric drawing.
+* Change in default values for isobarics.
+
 v0.1.1 (May, 13, 2020)
 ----------------------
 
