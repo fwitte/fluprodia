@@ -5,7 +5,8 @@ Changelog
 v1.1 (Someday, Somemonth, Someyear)
 -----------------------------------
 
-* Update script for plotting data extraction from TESPy simulation.
+* Change the iterator for isobaric, isenthalpic and isentropic to specific volume.
+* Adjust individual isoline plotting iterators and isolines accordingly.
 
 v1.0 (November, 8, 2020)
 ------------------------
