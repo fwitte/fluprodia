@@ -371,12 +371,16 @@ class FluidPropertyDiagram:
         self.s_min = self.state.smass()
         self.h_min = self.state.hmass()
 
-        self.state.specify_phase(CP.iphase_supercritical_liquid)
-        self.state.update(
-            CP.PT_INPUTS,
-            self.p_crit,
-            self.state.trivial_keyed_output(CP.iT_min))
+        self.state.specify_phase(CP.iphase_liquid)
+        p = self.p_crit
+        while True:
+            try:
+                self.state.update(CP.PT_INPUTS, p, self.T_trip + 1)
+                break
+            except ValueError:
+                p *= 0.999
         self.v_min = 1 / self.state.rhomass()
+        self.state.unspecify_phase()
 
         self.quality['isolines'] = np.linspace(0, 1, 11).round(8)
 
