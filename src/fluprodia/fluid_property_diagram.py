@@ -574,8 +574,8 @@ class FluidPropertyDiagram:
         isolines = self.pressure['isolines']
 
         iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 150, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 150))
+            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
+            np.geomspace(self.v_intermediate, self.v_max, 100))
 
         for p in isolines.round(8):
             self.pressure[p] = self.single_isobaric(iterator, np.ones(len(iterator)) * p)
@@ -585,8 +585,8 @@ class FluidPropertyDiagram:
         isolines = self.volume['isolines']
 
         iterator = np.append(
-            np.geomspace(self.p_trip, self.p_crit * 0.8, 150, endpoint=False),
-            np.geomspace(self.p_crit * 0.8, self.p_max, 150))
+            np.geomspace(self.p_trip, self.p_crit * 0.8, 100, endpoint=False),
+            np.geomspace(self.p_crit * 0.8, self.p_max, 100))
 
         for v in isolines.round(8):
             self.volume[v] = self.single_isochoric(
@@ -596,7 +596,7 @@ class FluidPropertyDiagram:
         """Calculate an isoline of constant temperature."""
         isolines = self.temperature['isolines']
 
-        iterator = np.linspace(self.s_min, self.s_max, 300)
+        iterator = np.linspace(self.s_min, self.s_max, 200)
 
         for T in isolines.round(8):
             self.temperature[T] = self.single_isothermal(
@@ -635,8 +635,8 @@ class FluidPropertyDiagram:
         isolines = self.enthalpy['isolines']
 
         iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 150, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 150))
+            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
+            np.geomspace(self.v_intermediate, self.v_max, 100))
 
         for h in isolines.round(8):
             self.enthalpy[h] = self.single_isenthalpic(
@@ -647,8 +647,8 @@ class FluidPropertyDiagram:
         isolines = self.entropy['isolines']
 
         iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 150, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 150))
+            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
+            np.geomspace(self.v_intermediate, self.v_max, 100))
 
         for s in isolines.round(8):
             self.entropy[s] = self.single_isentropic(

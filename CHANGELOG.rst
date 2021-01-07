@@ -2,8 +2,13 @@
 Changelog
 =========
 
-v1.1 (Someday, Somemonth, Someyear)
------------------------------------
+v1.2 (January, 7, 2021)
+-----------------------
+
+* Reduce the number of datappoints for isolines to 200 for faster performance.
+
+v1.1 (November, 10, 2020)
+-------------------------
 
 * Change the iterator for isobaric, isenthalpic and isentropic to specific volume.
 * Adjust individual isoline plotting iterators and isolines accordingly.
