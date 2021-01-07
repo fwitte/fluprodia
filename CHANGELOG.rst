@@ -2,10 +2,15 @@
 Changelog
 =========
 
-v1.2 (January, 7, 2021)
+v1.3 (January, 7, 2021)
 -----------------------
 
 * Reduce the number of datappoints for isolines to 200 for faster performance.
+
+v1.2 (December, 8, 2020)
+------------------------
+
+* Fix minimum volume value for iterators.
 
 v1.1 (November, 10, 2020)
 -------------------------
