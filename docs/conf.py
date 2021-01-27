@@ -6,30 +6,25 @@ import fluprodia
 from fluprodia import FluidPropertyDiagram
 import numpy as np
 from tespy.components import (
-    compressor, cycle_closer, heat_exchanger_simple, valve)
-from tespy.connections import connection
-from tespy.networks import network
+    Compressor, CycleCloser, HeatExchangerSimple, Valve)
+from tespy.connections import Connection
+from tespy.networks import Network
 
 
 def run_simple_heat_pump_model():
-    nw = network(['NH3'], T_unit='C', p_unit='bar', h_unit='kJ / kg')
+    nw = Network(['NH3'], T_unit='C', p_unit='bar', h_unit='kJ / kg')
     nw.set_attr(iterinfo=False)
-    cp = compressor('compressor')
-    cc = cycle_closer('cycle_closer')
-    cd = heat_exchanger_simple('condenser')
-    va = valve('expansion valve')
-    ev = heat_exchanger_simple('evaporator')
+    cp = Compressor('compressor')
+    cc = CycleCloser('cycle_closer')
+    cd = HeatExchangerSimple('condenser')
+    va = Valve('expansion valve')
+    ev = HeatExchangerSimple('evaporator')
 
-    cp.char_warnings = False
-    cd.char_warnings = False
-    va.char_warnings = False
-    ev.char_warnings = False
-
-    cc_cd = connection(cc, 'out1', cd, 'in1')
-    cd_va = connection(cd, 'out1', va, 'in1')
-    va_ev = connection(va, 'out1', ev, 'in1')
-    ev_cp = connection(ev, 'out1', cp, 'in1')
-    cp_cc = connection(cp, 'out1', cc, 'in1')
+    cc_cd = Connection(cc, 'out1', cd, 'in1')
+    cd_va = Connection(cd, 'out1', va, 'in1')
+    va_ev = Connection(va, 'out1', ev, 'in1')
+    ev_cp = Connection(ev, 'out1', cp, 'in1')
+    cp_cc = Connection(cp, 'out1', cc, 'in1')
 
     nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
 
@@ -42,44 +37,11 @@ def run_simple_heat_pump_model():
     ev_cp.set_attr(Td_bp=5, T=15)
     nw.solve('design')
 
-    result_dict = {
-        'compressor': {
-            'isoline_property': 's',
-            'isoline_value': ev_cp.s.val,
-            'isoline_value_end': cp_cc.s.val,
-            'starting_point_property': 'p',
-            'starting_point_value': ev_cp.p.val,
-            'ending_point_property': 'p',
-            'ending_point_value': cp_cc.p.val
-        },
-        'condenser': {
-            'isoline_property': 'p',
-            'isoline_value': cc_cd.p.val,
-            'isoline_value_end': cd_va.p.val,
-            'starting_point_property': 's',
-            'starting_point_value': cc_cd.s.val,
-            'ending_point_property': 's',
-            'ending_point_value': cd_va.s.val
-        },
-        'valve': {
-            'isoline_property': 'h',
-            'isoline_value': cd_va.h.val,
-            'isoline_value_end': va_ev.h.val,
-            'starting_point_property': 'p',
-            'starting_point_value': cd_va.p.val,
-            'ending_point_property': 'p',
-            'ending_point_value': va_ev.p.val
-        },
-        'evaporator': {
-            'isoline_property': 'p',
-            'isoline_value': va_ev.p.val,
-            'isoline_value_end': ev_cp.p.val,
-            'starting_point_property': 's',
-            'starting_point_value': va_ev.s.val,
-            'ending_point_property': 's',
-            'ending_point_value': ev_cp.s.val
-        }
-    }
+    result_dict = {}
+    result_dict.update(
+        {cp.label: cp.get_plotting_data()[1] for cp in nw.comps.index
+         if cp.get_plotting_data() is not None})
+
     return result_dict
 
 
