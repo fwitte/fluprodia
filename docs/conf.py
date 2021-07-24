@@ -39,7 +39,7 @@ def run_simple_heat_pump_model():
 
     result_dict = {}
     result_dict.update(
-        {cp.label: cp.get_plotting_data()[1] for cp in nw.comps.index
+        {cp.label: cp.get_plotting_data()[1] for cp in nw.comps['object']
          if cp.get_plotting_data() is not None})
 
     return result_dict

@@ -330,7 +330,7 @@ diagram, you could use the :code:`scatter()` method. If you want to have
 connected states, you will need the :code:`plot()` method. In this example, we
 will plot from a simple heat pump simulation in TESPy [1]_ (for more
 information on TESPy see the
-`online documentation <https://tespy.readthedocs.io/en/master>`_) into a logph
+`online documentation <https://tespy.readthedocs.io/>`_) into a logph
 and a Ts diagram.
 
 .. code-block:: python
@@ -411,7 +411,7 @@ planned in future versions of TESPy.
 
         result_dict = {}
         result_dict.update(
-            {cp.label: cp.get_plotting_data()[1] for cp in nw.comps.index
+            {cp.label: cp.get_plotting_data()[1] for cp in nw.comps['object']
              if cp.get_plotting_data() is not None})
 
         return result_dict
@@ -420,4 +420,4 @@ planned in future versions of TESPy.
 
     The values for plotting must be passed in the diagrams unit system.
 
-.. [1] Witte, F., 2020. Thermal Engineering Systems in Python (Version v0.3.4). Zenodo. http://doi.org/10.5281/zenodo.3699275
+.. [1] Witte, F., 2020. Thermal Engineering Systems in Python (Version v0.4.4). Zenodo. http://doi.org/10.5281/zenodo.5101409
