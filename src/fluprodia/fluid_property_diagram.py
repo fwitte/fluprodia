@@ -177,7 +177,7 @@ class FluidPropertyDiagram:
         self.converters = {}
         self.converters['p'] = {
             'Pa': 1, 'hPa': 1e2, 'mbar': 1e2, 'psi': 6894.7572931783,
-            'bar': 1e5, 'MPa': 1e6}
+            'kPa': 1e3, 'bar': 1e5, 'MPa': 1e6}
         self.converters['T'] = {
             'K': [0, 1], '°C': [273.15, 1], '°F': [459.67, 5 / 9]}
         self.converters['s'] = {'J/kgK': 1, 'kJ/kgK': 1e3, 'MJ/kgK': 1e6}

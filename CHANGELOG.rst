@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v1.4 (July, 28, 2021)
+---------------------
+
+* Add kPa to pressure unit system.
+* Fix TESPy API calls in the example usage.
+
 v1.3 (January, 7, 2021)
 -----------------------
 
