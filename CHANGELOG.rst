@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v1.5 (July, 28, 2021)
+---------------------
+
+* Update documentation on pressure units.
+* Improve error message for not available units.
+
 v1.4 (July, 28, 2021)
 ---------------------
 

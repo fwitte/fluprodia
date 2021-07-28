@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='fluprodia',
-    version='1.4',
+    version='1.5',
     license='MIT',
     description='Creating Fluid Proprety Diagrams using CoolProp',
     long_description='%s\n%s' % (

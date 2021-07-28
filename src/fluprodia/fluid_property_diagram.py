@@ -444,7 +444,7 @@ class FluidPropertyDiagram:
         ----------
         p : str
             Unit of pressure, units available are
-            :code:`Pa, hPa, mbar, psi, bar, MPa`.
+            :code:`Pa, hPa, mbar, psi, kPa, bar, MPa`.
 
         T : str
             Unit of temperatur, units available are
@@ -472,7 +472,9 @@ class FluidPropertyDiagram:
             else:
                 msg = (
                     'The unit ' + str(value) + ' is not available for the '
-                    'fluid property ' + self.properties[key] + '.')
+                    'fluid property ' + self.properties[key] + '. Please '
+                    'choose from ' + ', '.join(self.converters[key].keys()) +
+                    '.')
                 raise ValueError(msg)
 
     def save(self, filename='FluidPropertyDiagram.pdf', **kwargs):
