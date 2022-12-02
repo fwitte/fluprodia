@@ -2,6 +2,11 @@
 Changelog
 =========
 
+v1.6 (December, 02, 2022)
+-------------------------
+
+* Remove upper Python version limit.
+
 v1.5 (July, 28, 2021)
 ---------------------
 

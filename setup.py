@@ -25,7 +25,7 @@ def read(*names, **kwargs):
 
 setup(
     name='fluprodia',
-    version='1.5',
+    version='1.6',
     license='MIT',
     description='Creating Fluid Proprety Diagrams using CoolProp',
     long_description='%s\n%s' % (
@@ -48,8 +48,9 @@ setup(
         'Operating System :: Unix',
         'Operating System :: POSIX',
         'Operating System :: Microsoft :: Windows',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Utilities',
     ],
     project_urls={
@@ -60,7 +61,7 @@ setup(
     keywords=[
         'Fluid Property Diagrams', 'CoolProp', 'TESPy',
     ],
-    python_requires='>=3.7.*,<3.9',
+    python_requires='>3.7',
     install_requires=[
         'CoolProp>=6.4,<7',
         'matplotlib>=3.2,<4',
