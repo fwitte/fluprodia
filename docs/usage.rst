@@ -26,10 +26,11 @@ method. The fluid properties available are:
 
 .. code-block:: python
 
-    from fluprodia import FluidPropertyDiagram
-    import numpy as np
-    diagram = FluidPropertyDiagram('NH3')
-    diagram.set_unit_system(T='°C', p='bar', h='kJ/kg')
+    >>> from fluprodia import FluidPropertyDiagram
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> diagram = FluidPropertyDiagram('R290')
+    >>> diagram.set_unit_system(T='°C', p='bar', h='kJ/kg')
 
 After that, you can use the default isolines or specify your own lines by
 using the
@@ -43,12 +44,13 @@ for their x- and y-axes.
 
 .. code-block:: python
 
-    iso_T = np.arange(-50, 201, 25)
-    diagram.set_isolines(T=iso_T)
-    diagram.calc_isolines()
-    diagram.set_limits(x_min=0, x_max=8000, y_min=-50, y_max=200)
-    diagram.draw_isolines('Ts')
-    diagram.save('Ts_diagram.svg')
+    >>> iso_T = np.arange(-50, 201, 25)
+    >>> diagram.set_isolines(T=iso_T)
+    >>> diagram.calc_isolines()
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, "Ts", x_min=0, x_max=8000, y_min=-50, y_max=200)
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_diagram.svg')
 
 .. figure:: reference/_images/Ts_diagram.svg
     :align: center
@@ -61,9 +63,10 @@ call, you need to recalculate the isolines.
 
 .. code-block:: python
 
-    diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
-    diagram.draw_isolines('logph')
-    diagram.save('logph_diagram.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, "logph", x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_diagram.svg')
 
 .. figure:: reference/_images/logph_diagram.svg
     :align: center
@@ -72,7 +75,8 @@ All available diagram types can be displayed by printing the following line.
 
 .. code-block:: python
 
-    print(diagram.supported_diagrams.keys())
+    >>> list(diagram.supported_diagrams.keys())
+    ['Ts', 'hs', 'logph', 'Th', 'plogv']
 
 Customizing the Display
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -93,16 +97,16 @@ the more values you specify, the more lines can be displayed. Also, the
 computation time will rise.
 
 Still, it might be useful to specify a lot of values. E.g., if we want to
-create a full view of a logph diagram for NH3 and a zoomed view in the two
+create a full view of a logph diagram for R290 and a zoomed view in the two
 phase region with lines of constant vapor mass fraction for every 2.5 % and
 lines of constant temperature every 5 K.
 
 .. code-block:: python
 
-    T = np.arange(-50, 201, 5)
-    Q = np.linspace(0, 1, 41)
-    diagram.set_isolines(T=T, Q=Q)
-    diagram.calc_isolines()
+    >>> T = np.arange(-50, 201, 5)
+    >>> Q = np.linspace(0, 1, 41)
+    >>> diagram.set_isolines(T=T, Q=Q)
+    >>> diagram.calc_isolines()
 
 The following sections shows how to select from all isolines available.
 
@@ -116,14 +120,16 @@ a dictionary holding the required information.
 
 .. code-block:: python
 
-    diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
-    mydata = {
-        'Q': {'values': np.linspace(0, 1, 11)},
-        'T': {'values': np.arange(-50, 201, 25)}}
-    diagram.draw_isolines('logph', isoline_data=mydata)
-    diagram.save('logph_NH3_full.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...    'Q': {'values': np.linspace(0, 1, 11)},
+    ...    'T': {'values': np.arange(-50, 201, 25)}
+    ... }
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_R290_full.svg')
 
-.. figure:: reference/_images/logph_NH3_full.svg
+.. figure:: reference/_images/logph_R290_full.svg
     :align: center
 
 Now, for the zoomed diagram we want the full temperature and vapor mass
@@ -135,17 +141,17 @@ numpy array.
 
 .. code-block:: python
 
-    diagram.set_limits(x_min=1000, x_max=1500, y_min=1, y_max=2e2)
-    mydata = {
-        'T': {
-            'style': {'color': '#ff0000'},
-            'values': np.arange(-50, 201, 5)},
-        'v': {'values': np.array([])}
-        }
-    diagram.draw_isolines('logph', isoline_data=mydata)
-    diagram.save('logph_NH3_zoomed.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...    'T': {
+    ...        'style': {'color': '#ff0000'},
+    ...        'values': np.arange(-50, 201, 5)},
+    ...    'v': {'values': np.array([])}
+    ... }
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=1000, x_max=1500, y_min=1, y_max=2e2)
+    >>> fig.savefig('logph_R290_zoomed.svg')
 
-.. figure:: reference/_images/logph_NH3_zoomed.svg
+.. figure:: reference/_images/logph_R290_zoomed.svg
     :align: center
 
 .. note::
@@ -169,18 +175,19 @@ of each isoline within the limits of the view.
 
 .. code-block:: python
 
-    diagram.set_limits(x_min=1000, x_max=1500, y_min=1, y_max=2e2)
-    mydata = {
-        'T': {
-            'style': {'color': '#ff0000'},
-            'values': np.arange(-50, 201, 5),
-            'label_position': 0.8},
-        'v': {'values': np.array([])}
-        }
-    diagram.draw_isolines('logph', isoline_data=mydata)
-    diagram.save('logph_NH3_zoomed_temperature_labels.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...     'T': {
+    ...         'style': {'color': '#ff0000'},
+    ...         'values': np.arange(-50, 201, 5),
+    ...         'label_position': 0.8},
+    ...     'v': {'values': np.array([])}
+    ... }
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=1000, x_max=1500, y_min=1, y_max=2e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_R290_zoomed_temperature_labels.svg')
 
-.. figure:: reference/_images/logph_NH3_zoomed_temperature_labels.svg
+.. figure:: reference/_images/logph_R290_zoomed_temperature_labels.svg
     :align: center
 
 .. note::
@@ -204,51 +211,51 @@ diagram's respective unit system.
 
 .. code-block:: python
 
-    data = {
-        'isobaric': {
-            'isoline_property': 'p',
-            'isoline_value': 10,
-            'starting_point_property': 'T',
-            'starting_point_value': -25,
-            'ending_point_property': 'T',
-            'ending_point_value': 150
-        },
-        'isochoric': {
-            'isoline_property': 'v',
-            'isoline_value': 0.035,
-            'starting_point_property': 'h',
-            'starting_point_value': 750,
-            'ending_point_property': 'T',
-            'ending_point_value': 150
-        },
-        'isothermal': {
-            'isoline_property': 'T',
-            'isoline_value': 65,
-            'starting_point_property': 'v',
-            'starting_point_value': 0.01,
-            'ending_point_property': 'v',
-            'ending_point_value': 0.5
-        },
-        'isenthalpic': {
-            'isoline_property': 'h',
-            'isoline_value': 850,
-            'starting_point_property': 'p',
-            'starting_point_value': 200,
-            'ending_point_property': 'v',
-            'ending_point_value': 0.5
-        },
-        'isentropic': {
-            'isoline_property': 's',
-            'isoline_value': 4700,
-            'starting_point_property': 'T',
-            'starting_point_value': -20,
-            'ending_point_property': 'T',
-            'ending_point_value': 150
-        }
-    }
+    >>> data = {
+    ...     'isobaric': {
+    ...         'isoline_property': 'p',
+    ...         'isoline_value': 10,
+    ...         'starting_point_property': 'T',
+    ...         'starting_point_value': -25,
+    ...         'ending_point_property': 'T',
+    ...         'ending_point_value': 150
+    ...     },
+    ...     'isochoric': {
+    ...         'isoline_property': 'v',
+    ...         'isoline_value': 0.035,
+    ...         'starting_point_property': 'h',
+    ...         'starting_point_value': 750,
+    ...         'ending_point_property': 'T',
+    ...         'ending_point_value': 150
+    ...     },
+    ...     'isothermal': {
+    ...         'isoline_property': 'T',
+    ...         'isoline_value': 50,
+    ...         'starting_point_property': 'v',
+    ...         'starting_point_value': 0.01,
+    ...         'ending_point_property': 'v',
+    ...         'ending_point_value': 0.5
+    ...     },
+    ...     'isenthalpic': {
+    ...         'isoline_property': 'h',
+    ...         'isoline_value': 850,
+    ...         'starting_point_property': 'p',
+    ...         'starting_point_value': 200,
+    ...         'ending_point_property': 'v',
+    ...         'ending_point_value': 0.5
+    ...     },
+    ...     'isentropic': {
+    ...         'isoline_property': 's',
+    ...         'isoline_value': 4700,
+    ...         'starting_point_property': 'T',
+    ...         'starting_point_value': -20,
+    ...         'ending_point_property': 'T',
+    ...         'ending_point_value': 150
+    ...     }
+    ... }
 
-    for name, specs in data.items():
-        data[name]['datapoints'] = diagram.calc_individual_isoline(**specs)
+    >>> for name, specs in data.items():
+    ...    data[name]['datapoints'] = diagram.calc_individual_isoline(**specs)
 
 With these data, it is possible to plot to your diagram simply by plotting on
 the :code:`diagram.ax` object, which is a
@@ -258,29 +265,31 @@ property of your diagram, e.g. to the :code:`plot()` method.
 
 .. code-block:: python
 
-    diagram.set_limits(x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
-    mydata = {
-        'Q': {'values': np.linspace(0, 1, 11)},
-        'T': {'values': np.arange(-50, 201, 25)}}
-    diagram.draw_isolines('logph', isoline_data=mydata)
-    for key, specs in data.items():
-        datapoints = specs['datapoints']
-        diagram.ax.plot(specs['datapoints']['h'], specs['datapoints']['p'], label=key)
-    diagram.ax.legend(loc='lower right')
-    diagram.save('logph_NH3_isolines.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...     'Q': {'values': np.linspace(0, 1, 11)},
+    ...     'T': {'values': np.arange(-50, 201, 25)}
+    ... }
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> for key, specs in data.items():
+    ...     datapoints = specs['datapoints']
+    ...     _ = ax.plot(specs['datapoints']['h'], specs['datapoints']['p'], label=key)
+    >>> _ = ax.legend(loc='lower right');
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_R290_isolines.svg')
 
-    diagram.set_limits(x_min=0, x_max=7000, y_min=-50, y_max=201)
-    diagram.draw_isolines('Ts')
-    for key, specs in data.items():
-        datapoints = specs['datapoints']
-        diagram.ax.plot(specs['datapoints']['s'], specs['datapoints']['T'], label=key)
-    diagram.ax.legend(loc='lower right')
-    diagram.save('Ts_NH3_isolines.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=0, x_max=7000, y_min=-50, y_max=201)
+    >>> for key, specs in data.items():
+    ...     datapoints = specs['datapoints']
+    ...     _ = ax.plot(specs['datapoints']['s'], specs['datapoints']['T'], label=key)
+    >>> _ = ax.legend(loc='lower right')
+    >>> fig.savefig('Ts_R290_isolines.svg')
 
-.. figure:: reference/_images/logph_NH3_isolines.svg
+.. figure:: reference/_images/logph_R290_isolines.svg
     :align: center
 
-.. figure:: reference/_images/Ts_NH3_isolines.svg
+.. figure:: reference/_images/Ts_R290_isolines.svg
     :align: center
 
 .. note::
@@ -304,28 +313,29 @@ method.
 
 .. code-block:: python
 
-    data = {
-        'isoline_property': 'p',
-        'isoline_value': 10,
-        'isoline_value_end': 9,
-        'starting_point_property': 'h',
-        'starting_point_value': 350,
-        'ending_point_property': 'h',
-        'ending_point_value': 1750
-    }
-    datapoints = diagram.calc_individual_isoline(**data)
-    diagram.draw_isolines('Ts')
-    for specs in data.values():
-        diagram.ax.plot(datapoints['s'], datapoints['T'])
-    diagram.save('Ts_NH3_pressure_loss.svg')
+    >>> data = {
+    ...     'isoline_property': 'p',
+    ...     'isoline_value': 10,
+    ...     'isoline_value_end': 9,
+    ...     'starting_point_property': 'h',
+    ...     'starting_point_value': 350,
+    ...     'ending_point_property': 'h',
+    ...     'ending_point_value': 1750
+    ... }
+    >>> datapoints = diagram.calc_individual_isoline(**data)
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=0, x_max=7000, y_min=-50, y_max=201)
+    >>> for specs in data.values():
+    ...    _ = ax.plot(datapoints['s'], datapoints['T'])
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_R290_pressure_loss.svg')
 
-.. figure:: reference/_images/Ts_NH3_pressure_loss.svg
+.. figure:: reference/_images/Ts_R290_pressure_loss.svg
     :align: center
 
 Plotting States into the Diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For instance, if you want to plot two different states of :code:`NH3` into your
+For instance, if you want to plot two different states of :code:`R290` into your
 diagram, you could use the :code:`scatter()` method. If you want to have
 connected states, you will need the :code:`plot()` method. In this example, we
 will plot from a simple heat pump simulation in TESPy [1]_ (for more
@@ -333,36 +343,6 @@ information on TESPy see the
 `online documentation <https://tespy.readthedocs.io/>`_) into a logph
 and a Ts diagram.
 
-.. code-block:: python
-
-    tespy_results = run_simple_heat_pump_model()
-    for key, data in tespy_results.items():
-        tespy_results[key]['datapoints'] = diagram.calc_individual_isoline(**data)
-
-    diagram.set_limits(x_min=0, x_max=2100, y_min=1e0, y_max=2e2)
-    mydata = {
-        'Q': {'values': np.linspace(0, 1, 11)},
-        'T': {
-            'values': np.arange(-25, 226, 25),
-            'style': {'color': '#000000'}
-        }
-    }
-    diagram.draw_isolines('logph', isoline_data=mydata)
-
-    for key in tespy_results.keys():
-        datapoints = tespy_results[key]['datapoints']
-        diagram.ax.plot(datapoints['h'], datapoints['p'], color='#ff0000')
-        diagram.ax.scatter(datapoints['h'][0], datapoints['p'][0], color='#ff0000')
-    diagram.save('logph_diagram_states.svg')
-
-    diagram.set_limits(x_min=2000, x_max=7000, y_min=-50, y_max=225)
-    diagram.draw_isolines('Ts')
-
-    for key in tespy_results.keys():
-        datapoints = tespy_results[key]['datapoints']
-        diagram.ax.plot(datapoints['s'], datapoints['T'], color='#ff0000')
-        diagram.ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
-    diagram.save('Ts_diagram_states.svg')
 
 .. figure:: reference/_images/logph_diagram_states.svg
     :align: center
@@ -377,44 +357,74 @@ planned in future versions of TESPy.
 
 .. code-block:: python
 
-    from tespy.components import (
-        Compressor, CycleCloser, HeatExchangerSimple, Valve)
-    from tespy.connections import Connection
-    from tespy.networks import Network
+    >>> from tespy.components import (Compressor, CycleCloser, SimpleHeatExchanger, Valve)
+    >>> from tespy.connections import Connection
+    >>> from tespy.networks import Network
 
 
-    def run_simple_heat_pump_model():
-        nw = Network(['NH3'], T_unit='C', p_unit='bar', h_unit='kJ / kg')
-        nw.set_attr(iterinfo=False)
-        cp = Compressor('compressor')
-        cc = CycleCloser('cycle_closer')
-        cd = HeatExchangerSimple('condenser')
-        va = Valve('expansion valve')
-        ev = HeatExchangerSimple('evaporator')
+    >>> def run_simple_heat_pump_model():
+    ...     nw = Network(T_unit='C', p_unit='bar', h_unit='kJ / kg')
+    ...     nw.set_attr(iterinfo=False)
+    ...     cp = Compressor('compressor')
+    ...     cc = CycleCloser('cycle_closer')
+    ...     cd = SimpleHeatExchanger('condenser')
+    ...     va = Valve('expansion valve')
+    ...     ev = SimpleHeatExchanger('evaporator')
+    ...
+    ...     cc_cd = Connection(cc, 'out1', cd, 'in1')
+    ...     cd_va = Connection(cd, 'out1', va, 'in1')
+    ...     va_ev = Connection(va, 'out1', ev, 'in1')
+    ...     ev_cp = Connection(ev, 'out1', cp, 'in1')
+    ...     cp_cc = Connection(cp, 'out1', cc, 'in1')
+    ...
+    ...     nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
+    ...
+    ...     cd.set_attr(pr=0.95, Q=-1e6)
+    ...     ev.set_attr(pr=0.9)
+    ...     cp.set_attr(eta_s=0.9)
+    ...
+    ...     cc_cd.set_attr(fluid={'R290': 1})
+    ...     cd_va.set_attr(Td_bp=-5, T=60)
+    ...     ev_cp.set_attr(Td_bp=5, T=15)
+    ...     nw.solve('design')
+    ...
+    ...     result_dict = {}
+    ...     result_dict.update(
+    ...         {cp.label: cp.get_plotting_data()[1] for cp in nw.comps['object']
+    ...          if cp.get_plotting_data() is not None})
+    ...
+    ...     return result_dict
 
-        cc_cd = Connection(cc, 'out1', cd, 'in1')
-        cd_va = Connection(cd, 'out1', va, 'in1')
-        va_ev = Connection(va, 'out1', ev, 'in1')
-        ev_cp = Connection(ev, 'out1', cp, 'in1')
-        cp_cc = Connection(cp, 'out1', cc, 'in1')
+.. code-block:: python
 
-        nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
+    >>> tespy_results = run_simple_heat_pump_model()
+    >>> for key, data in tespy_results.items():
+    ...    tespy_results[key]['datapoints'] = diagram.calc_individual_isoline(**data)
 
-        cd.set_attr(pr=0.95, Q=-1e6)
-        ev.set_attr(pr=0.9)
-        cp.set_attr(eta_s=0.9)
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...     'Q': {'values': np.linspace(0, 1, 11)},
+    ...     'T': {
+    ...         'values': np.arange(-25, 226, 25),
+    ...         'style': {'color': '#000000'}
+    ...     }
+    ... }
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e0, y_max=2e2)
 
-        cc_cd.set_attr(fluid={'NH3': 1})
-        cd_va.set_attr(Td_bp=-5, T=85)
-        ev_cp.set_attr(Td_bp=5, T=15)
-        nw.solve('design')
+    >>> for key in tespy_results.keys():
+    ...    datapoints = tespy_results[key]['datapoints']
+    ...    _ = ax.plot(datapoints['h'], datapoints['p'], color='#ff0000')
+    ...    _ = ax.scatter(datapoints['h'][0], datapoints['p'][0], color='#ff0000')
+    >>> fig.savefig('logph_diagram_states.svg')
 
-        result_dict = {}
-        result_dict.update(
-            {cp.label: cp.get_plotting_data()[1] for cp in nw.comps['object']
-             if cp.get_plotting_data() is not None})
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=2000, x_max=7000, y_min=-50, y_max=225)
 
-        return result_dict
+    >>> for key in tespy_results.keys():
+    ...     datapoints = tespy_results[key]['datapoints']
+    ...     _ = ax.plot(datapoints['s'], datapoints['T'], color='#ff0000')
+    ...     _ = ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
+    >>> fig.savefig('Ts_diagram_states.svg')
 
 .. note::
 

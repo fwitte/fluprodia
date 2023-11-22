@@ -82,16 +82,12 @@ class FluidPropertyDiagram:
     Example
     -------
     This is a small example of how to create a fluid property dataset for water
-    and export to Ts-, hs- and logph-diagram. The default values for width and
-    height are 16/10.
+    and export to Ts-, hs- and logph-diagram.
 
     >>> from fluprodia import FluidPropertyDiagram
+    >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> diagram = FluidPropertyDiagram('water')
-    >>> diagram.width
-    16.0
-    >>> diagram.height
-    10.0
 
     After object creation it is possible to specify isolines. There are deault
     isolines available, but these might not suit your requirements. We will
@@ -106,39 +102,34 @@ class FluidPropertyDiagram:
     >>> iso_h = np.arange(0, 3601, 200)
     >>> diagram.set_isolines(T=iso_T, h=iso_h)
 
-    Now we can calculate the diagram data and export after that. If you want to
-    plot additional data on the diagram (e.g. measurement data from a
-    thermodynamic process) you can do this on the :code:`diagram.ax` object. It
-    is a :code:`matplotlib.axes._subplots.AxesSubplot` object and therefore
-    you can apply standard matplotlib methods. The figure of the plot can be
-    accessed via :code:`diagram.fig`
+    Now we can calculate the diagram data and create the diagram, the data
+    should be plotted to. If you want to plot additional data to your diagram,
+    first call the `draw_isolines` method, and then plot your data.
 
-    >>> type(diagram.ax)
-    <class 'matplotlib.axes._subplots.AxesSubplot'>
-    >>> type(diagram.fig)
-    <class 'matplotlib.figure.Figure'>
     >>> diagram.calc_isolines()
 
     After that it is possible to specify the view range of the plot and draw
     the isolines of a specific type of diagram. Last step is to export your
     diagram. Any file format supported by matplotlib is possible.
 
-    >>> diagram.set_limits(x_min=0, x_max=8, y_min=0, y_max=700)
-    >>> diagram.draw_isolines(diagram_type='Ts')
-    >>> diagram.save('Ts_Diagramm.pdf')
+    >>> fig, ax = plt.subplots(1)
+    >>> diagram.draw_isolines(diagram_type='Ts', fig=fig, ax=ax, x_min=0, x_max=8, y_min=0, y_max=700)
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_Diagramm.pdf')
 
     If we want to create a different diagram, e.g. hs-diagram, it is not
-    necessary to recalculate the isolines. Instead, reset the limits to match
-    your needs and draw the isolines for a different diagram. If limits do not
-    change, there is no necessety to respecify the limits.
+    necessary to recalculate the isolines. Instead, create a new figure and draw
+    the isolines for a different diagram.
 
-    >>> diagram.set_limits(y_min=0, y_max=3600)
-    >>> diagram.draw_isolines(diagram_type='hs')
-    >>> diagram.save('hs_Diagramm.pdf')
+    >>> fig, ax = plt.subplots(1, figsize=(8, 5))
+    >>> diagram.draw_isolines(diagram_type='hs', fig=fig, ax=ax, x_min=0, x_max=8, y_min=0, y_max=3600)
+    >>> plt.tight_layout()
+    >>> fig.savefig('hs_Diagramm.pdf')
 
-    >>> diagram.set_limits(x_min=0, x_max=3600, y_min=1e-2, y_max=5e2)
-    >>> diagram.draw_isolines(diagram_type='logph')
-    >>> diagram.save('logph_Diagramm.pdf')
+    >>> fig, ax = plt.subplots(1, figsize=(8, 5))
+    >>> diagram.draw_isolines(diagram_type='logph', fig=fig, ax=ax, x_min=0, x_max=3600, y_min=1e-2, y_max=5e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_Diagramm.pdf')
 
     It is also possible to specify/modify the isolines to plot. For example,
     the lines of constant specific enthalpy should be plotted in red color
@@ -147,16 +138,21 @@ class FluidPropertyDiagram:
     :py:meth:`fluprodia.fluid_property_diagram.FluidPropertyDiagram.draw_isolines`
     method.
 
-    >>> diagram.set_limits(x_min=0, x_max=8, y_min=0, y_max=700)
-    >>> diagram.draw_isolines(diagram_type='Ts',
-    ... isoline_data={'h': {
-    ... 'values': iso_h,
-    ... 'style': {'linewidth': 2, 'color': '#ff0000'}},
-    ... 'v': {'values': np.array([])}})
-    >>> diagram.save('Ts_Diagramm.pdf')
+    >>> fig, ax = plt.subplots(1)
+    >>> diagram.draw_isolines(
+    ...     diagram_type='Ts', fig=fig, ax=ax,
+    ...     isoline_data={
+    ...         'h': {
+    ...            'values': iso_h,
+    ...            'style': {'linewidth': 2, 'color': '#ff0000'}
+    ...         }, 'v': {'values': np.array([])}},
+    ...     x_min=0, x_max=8, y_min=0, y_max=700
+    ... )
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_Diagramm.pdf')
     """
 
-    def __init__(self, fluid, width=16.0, height=10.0):
+    def __init__(self, fluid):
         u"""Create a FluidPropertyDiagram object.
 
         Parameters
@@ -256,7 +252,6 @@ class FluidPropertyDiagram:
         self.y_min = None
         self.y_max = None
 
-        self.set_diagram_layout(width, height)
         self.set_unit_system()
 
         self.pressure = {'isolines': np.array([])}
@@ -267,7 +262,6 @@ class FluidPropertyDiagram:
         self.quality = {'isolines': np.array([])}
 
         self.set_isoline_defaults()
-        self.set_limits()
         self.default_line_layout()
         self.default_label_positioning()
 
@@ -398,44 +392,6 @@ class FluidPropertyDiagram:
             self.p_trip + 1e-2, self.p_max).round(8)
         self.volume['isolines'] = isolines_log(self.v_min, self.v_max).round(8)
 
-    def set_limits(self, **kwargs):
-        """Set the diagram's limits.
-
-        Parameters
-        ----------
-        x_min : float
-            Minimum value for x axis :code:`x_min`.
-
-        x_max : float
-            Maximum value for x axis :code:`x_max`.
-
-        y_min : float
-            Minimum value for y axis :code:`y_min`.
-
-        y_max : float
-            Maximum value for y axis :code:`y_max`.
-        """
-        self.x_min = kwargs.get('x_min', self.x_min)
-        self.x_max = kwargs.get('x_max', self.x_max)
-        self.y_min = kwargs.get('y_min', self.y_min)
-        self.y_max = kwargs.get('y_max', self.y_max)
-
-    def set_diagram_layout(self, width, height):
-        """Set the diagram's width and height and create the figure.
-
-        Parameters
-        ----------
-        width : float
-            Width of all diagrams.
-
-        height : float
-            Height of all diagrams.
-        """
-        self.width = width
-        self.height = height
-        self.fig = plt.figure(figsize=(self.width, self.height))
-        self.ax = self.fig.add_subplot()
-
     def set_unit_system(self, **kwargs):
         u"""Set the unit system for the fluid properties.
 
@@ -476,29 +432,7 @@ class FluidPropertyDiagram:
                     '.')
                 raise ValueError(msg)
 
-    def save(self, filename='FluidPropertyDiagram.pdf', **kwargs):
-        """Save the diagram.
-
-        Parameters
-        ----------
-        filename : str
-            Path for the exported diagram. The file extension determines the
-            file format of the diagram. Available formats are the standard
-            matplotlib formats.
-
-        kwargs : misc
-            Keyword arguments of the :code:`matplotlib.figure.Figure.savefig`
-            method.
-        """
-        self.ax.set_xlim([self.x_min, self.x_max])
-        self.ax.set_ylim([self.y_min, self.y_max])
-        self.ax.set_xlabel(self.x_label)
-        self.ax.set_ylabel(self.y_label)
-        self.ax.grid()
-        plt.tight_layout()
-        self.fig.savefig(filename, **kwargs)
-
-    def draw_isoline_label(self, isoline, property, idx, x, y):
+    def draw_isoline_label(self, fig, ax, isoline, property, idx, x, y, x_min, x_max, y_min, y_max):
         """Draw a label for an isoline.
 
         Parameters
@@ -519,12 +453,16 @@ class FluidPropertyDiagram:
         y : ndarray
             y-values of the isoline.s
         """
+        fig_size = fig.get_size_inches()
+        pos = ax.get_position()
+        width, height = (pos.width * fig_size[0], pos.height * fig_size[1])
+
         if (idx > len(x) or
                 idx == 0 or
-                x[idx] > self.x_max or x[idx] < self.x_min or
-                y[idx] > self.y_max or y[idx] < self.y_min or
-                x[idx - 1] > self.x_max or x[idx - 1] < self.x_min or
-                y[idx - 1] > self.y_max or y[idx - 1] < self.y_min):
+                x[idx] > x_max or x[idx] < x_min or
+                y[idx] > y_max or y[idx] < y_min or
+                x[idx - 1] > x_max or x[idx - 1] < x_min or
+                y[idx - 1] > y_max or y[idx - 1] < y_min):
             return
 
         idx -= 1
@@ -537,29 +475,30 @@ class FluidPropertyDiagram:
         elif y[idx] - y[idx - 1] == 0:
             alpha = 0
         else:
-            if self.ax.get_xscale() == 'log':
+            if ax.get_xscale() == 'log':
                 x_scaled = (np.log(x[idx]) - np.log(x[idx - 1])) * (
-                    self.width / (np.log(self.x_max) - np.log(self.x_min)))
+                    width / (np.log(x_max) - np.log(x_min)))
             else:
                 x_scaled = (x[idx] - x[idx - 1]) * (
-                    self.width / (self.x_max - self.x_min))
+                    width / (x_max - x_min))
 
-            if self.ax.get_yscale() == 'log':
+            if ax.get_yscale() == 'log':
                 y_scaled = (np.log(y[idx]) - np.log(y[idx - 1])) * (
-                    self.height / (np.log(self.y_max) - np.log(self.y_min)))
+                    height / (np.log(y_max) - np.log(y_min)))
             else:
                 y_scaled = (y[idx] - y[idx - 1]) * (
-                    self.height / (self.y_max - self.y_min))
+                    height / (y_max - y_min))
 
             alpha = np.arctan(y_scaled / x_scaled) / (2 * np.pi) * 360
 
         unit = beautiful_unit_string(self.units[property])
 
         txt = str(isoline) + ' ' + unit
-        self.ax.text(
+        ax.text(
             x[idx], y[idx], txt, fontsize=5,
             rotation=alpha, va='center', ha='center',
-            bbox=dict(facecolor='white', edgecolor='white', pad=0.0))
+            bbox=dict(facecolor='white', edgecolor='white', pad=0.0)
+        )
 
     def calc_isolines(self):
         """Calculate all isolines."""
@@ -1053,7 +992,7 @@ class FluidPropertyDiagram:
 
         return datapoints
 
-    def draw_isolines(self, diagram_type, isoline_data={}):
+    def draw_isolines(self, fig, ax, diagram_type, x_min, x_max, y_min, y_max, isoline_data={}):
         """Draw the isolines of a specific diagram type.
 
         Parameters
@@ -1084,14 +1023,17 @@ class FluidPropertyDiagram:
                 'inputs are: ' + str(self.supported_diagrams.keys()) + '.')
             raise ValueError(msg)
 
-        self.ax.clear()
+        ax.clear()
+
+        ax.set_ylim([y_min, y_max])
+        ax.set_xlim([x_min, x_max])
 
         x_property = self.supported_diagrams[diagram_type]['x_property']
         y_property = self.supported_diagrams[diagram_type]['y_property']
         x_scale = self.supported_diagrams[diagram_type]['x_scale']
         y_scale = self.supported_diagrams[diagram_type]['y_scale']
-        self.ax.set_xscale(x_scale)
-        self.ax.set_yscale(y_scale)
+        ax.set_xscale(x_scale)
+        ax.set_yscale(y_scale)
 
         self.x_label = (
             x_property + ' in ' +
@@ -1136,8 +1078,8 @@ class FluidPropertyDiagram:
                 y = self.convert_from_SI(data[isoval][y_property], y_property)
 
                 indices = np.intersect1d(
-                    np.where((x >= self.x_min) & (x <= self.x_max)),
-                    np.where((y >= self.y_min) & (y <= self.y_max))
+                    np.where((x >= x_min) & (x <= x_max)),
+                    np.where((y >= y_min) & (y <= y_max))
                 )
 
                 if len(indices) == 0:
@@ -1158,13 +1100,16 @@ class FluidPropertyDiagram:
                 y = y[indices]
                 x = x[indices]
 
-                self.ax.plot(x, y, **data['style'])
+                ax.plot(x, y, **data['style'])
 
                 isoval = self.convert_from_SI(isoval, isoline)
 
                 self.draw_isoline_label(
+                    fig, ax,
                     isoval.round(8), isoline,
-                    int(data['label_position'] * len(x)), x, y)
+                    int(data['label_position'] * len(x)),
+                    x, y, x_min, x_max, y_min, y_max
+                )
 
     def convert_to_SI(self, value, property):
         """Convert a value to its SI value."""

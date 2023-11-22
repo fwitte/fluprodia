@@ -56,28 +56,32 @@ Installation and Usage
 
 .. code-block:: python
 
-    from fluprodia import FluidPropertyDiagram
+    >>> from fluprodia import FluidPropertyDiagram
+    >>> import matplotlib.pyplot as plt
 
-    diagram = FluidPropertyDiagram(fluid='H2O')
-    diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
-    diagram.calc_isolines()
-    diagram.set_limits(x_min=0, x_max=8000, y_min=0, y_max=700)
-    diagram.draw_isolines(diagram_type='Ts')
-    diagram.save('Ts_diagram_H2O.svg')
-    diagram.save('Ts_diagram_H2O.png', dpi=300)
+    >>> diagram = FluidPropertyDiagram(fluid='H2O')
+    >>> diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
+    >>> diagram.calc_isolines()
+
+    >>> fig, ax = plt.subplots(1, figsize=(8, 5))
+    >>> diagram.draw_isolines(diagram_type='Ts', fig=fig, ax=ax, x_min=0, x_max=8000, y_min=0, y_max=700)
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_diagram_H2O.svg')
+    >>> fig.savefig('Ts_diagram_H2O.png', dpi=300)
 
 .. figure:: docs/reference/_images/Ts_diagram_H2O.png
     :align: center
 
 .. code-block:: python
 
-    diagram = FluidPropertyDiagram(fluid='NH3')
-    diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
-    diagram.calc_isolines()
-    diagram.set_limits(x_min=0, x_max=2000, y_min=1e-1, y_max=2e2)
-    diagram.draw_isolines(diagram_type='logph')
-    diagram.save('logph_diagram_NH3.png', dpi=300)
-    diagram.save('logph_diagram_NH3.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(8, 5))
+    >>> diagram = FluidPropertyDiagram(fluid='R290')
+    >>> diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
+    >>> diagram.calc_isolines()
+    >>> diagram.draw_isolines(diagram_type='logph', fig=fig, ax=ax, x_min=0, x_max=2000, y_min=1e-1, y_max=2e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_diagram_R290.png', dpi=300)
+    >>> fig.savefig('logph_diagram_R290.svg')
 
 .. figure:: docs/reference/_images/logph_diagram_NH3.png
     :align: center
