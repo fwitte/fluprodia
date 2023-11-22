@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v2.0 (November, 22, 2023)
+-------------------------
+* The API changed in a way, that you have to create the figure and axes
+  externally using matplolib. These are then passed to the `draw_isolines`
+  method. See the README or in the examples for the new API version.
+
 v1.6 (December, 02, 2022)
 -------------------------
 

@@ -2,8 +2,8 @@
 Contributing
 ============
 
-Contributions are welcome, and they are greatly appreciated! Every
-little bit helps, and credit will always be given.
+Contributions are welcome, and they are greatly appreciated! Every bit helps,
+and credit will always be given.
 
 Bug reports
 ===========
@@ -68,7 +68,7 @@ If you need some code review or feedback while you're developing the code just m
 
 For merging, you should:
 
-1. Include passing tests (run ``tox``) [1]_.
+1. Include passing tests (run ``pytest``) [1]_.
 2. Update documentation when there's new API, functionality etc.
 3. Add a note to ``CHANGELOG.rst`` about the changes.
 4. Add yourself to ``AUTHORS.rst``.
@@ -77,14 +77,3 @@ For merging, you should:
        `run the tests <https://travis-ci.org/fwitte/fluprodia/pull_requests>`_ for each change you add in the pull request.
 
        It will be slower though ...
-
-Tips
-----
-
-To run a subset of tests::
-
-    tox -e envname -- pytest -k test_myfeature
-
-To run all the test environments in *parallel* (you need to ``pip install detox``)::
-
-    detox

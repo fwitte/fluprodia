@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 """
 
 import CoolProp as CP
-import matplotlib.pyplot as plt
 import numpy as np
 
 

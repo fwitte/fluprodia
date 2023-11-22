@@ -218,7 +218,7 @@ extensions = [
 source_suffix = '.rst'
 master_doc = 'index'
 project = 'fluprodia'
-year = '2020'
+year = '2023'
 author = 'Francesco Witte'
 copyright = '{0}, {1}'.format(year, author)
 
