@@ -44,11 +44,11 @@ for their x- and y-axes.
 
 .. code-block:: python
 
-    >>> iso_T = np.arange(-50, 201, 25)
+    >>> iso_T = np.arange(-75, 151, 25)
     >>> diagram.set_isolines(T=iso_T)
     >>> diagram.calc_isolines()
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, "Ts", x_min=0, x_max=8000, y_min=-50, y_max=200)
+    >>> diagram.draw_isolines(fig, ax, "Ts", x_min=500, x_max=3000, y_min=-50, y_max=150)
     >>> plt.tight_layout()
     >>> fig.savefig('Ts_diagram.svg')
 
@@ -64,7 +64,7 @@ call, you need to recalculate the isolines.
 .. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, "logph", x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> diagram.draw_isolines(fig, ax, "logph", x_min=0, x_max=750, y_min=1e-1, y_max=1e2)
     >>> plt.tight_layout()
     >>> fig.savefig('logph_diagram.svg')
 
@@ -103,7 +103,7 @@ lines of constant temperature every 5 K.
 
 .. code-block:: python
 
-    >>> T = np.arange(-50, 201, 5)
+    >>> T = np.arange(-75, 151, 5)
     >>> Q = np.linspace(0, 1, 41)
     >>> diagram.set_isolines(T=T, Q=Q)
     >>> diagram.calc_isolines()
@@ -115,17 +115,17 @@ Lines displayed and Linestyle
 
 As we do not want to display all values for temperature and vapor mass fraction
 for the full view diagram, we specify the values to be displayed for these
-properties. This is done by using the isoline_data property, which must be
-a dictionary holding the required information.
+properties. This is done by using the :code:`isoline_data` property, which must
+be a dictionary holding the required information.
 
 .. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
     >>> mydata = {
     ...    'Q': {'values': np.linspace(0, 1, 11)},
-    ...    'T': {'values': np.arange(-50, 201, 25)}
+    ...    'T': {'values': np.arange(-75, 151, 25)}
     ... }
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=750, y_min=1e-1, y_max=1e2)
     >>> plt.tight_layout()
     >>> fig.savefig('logph_R290_full.svg')
 
@@ -143,12 +143,14 @@ numpy array.
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
     >>> mydata = {
-    ...    'T': {
-    ...        'style': {'color': '#ff0000'},
-    ...        'values': np.arange(-50, 201, 5)},
-    ...    'v': {'values': np.array([])}
+    ...     'T': {
+    ...         'style': {'color': '#ff0000'},
+    ...         'values': T
+    ...     },
+    ...     'v': {'values': np.array([])}
     ... }
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=1000, x_max=1500, y_min=1, y_max=2e2)
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=300, x_max=600, y_min=1, y_max=1e2)
+    >>> plt.tight_layout()
     >>> fig.savefig('logph_R290_zoomed.svg')
 
 .. figure:: reference/_images/logph_R290_zoomed.svg
@@ -179,11 +181,12 @@ of each isoline within the limits of the view.
     >>> mydata = {
     ...     'T': {
     ...         'style': {'color': '#ff0000'},
-    ...         'values': np.arange(-50, 201, 5),
-    ...         'label_position': 0.8},
+    ...         'values': T,
+    ...         'label_position': 0.8
+    ...     },
     ...     'v': {'values': np.array([])}
     ... }
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=1000, x_max=1500, y_min=1, y_max=2e2)
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=300, x_max=600, y_min=1, y_max=1e2)
     >>> plt.tight_layout()
     >>> fig.savefig('logph_R290_zoomed_temperature_labels.svg')
 
@@ -216,7 +219,7 @@ diagram's respective unit system.
     ...         'isoline_property': 'p',
     ...         'isoline_value': 10,
     ...         'starting_point_property': 'T',
-    ...         'starting_point_value': -25,
+    ...         'starting_point_value': -50,
     ...         'ending_point_property': 'T',
     ...         'ending_point_value': 150
     ...     },
@@ -224,33 +227,33 @@ diagram's respective unit system.
     ...         'isoline_property': 'v',
     ...         'isoline_value': 0.035,
     ...         'starting_point_property': 'h',
-    ...         'starting_point_value': 750,
+    ...         'starting_point_value': 250,
     ...         'ending_point_property': 'T',
-    ...         'ending_point_value': 150
+    ...         'ending_point_value': 125
     ...     },
     ...     'isothermal': {
     ...         'isoline_property': 'T',
     ...         'isoline_value': 50,
-    ...         'starting_point_property': 'v',
-    ...         'starting_point_value': 0.01,
+    ...         'starting_point_property': 'Q',
+    ...         'starting_point_value': 0.1,
     ...         'ending_point_property': 'v',
     ...         'ending_point_value': 0.5
     ...     },
     ...     'isenthalpic': {
     ...         'isoline_property': 'h',
-    ...         'isoline_value': 850,
+    ...         'isoline_value': 500,
     ...         'starting_point_property': 'p',
-    ...         'starting_point_value': 200,
-    ...         'ending_point_property': 'v',
-    ...         'ending_point_value': 0.5
+    ...         'starting_point_value': 95,
+    ...         'ending_point_property': 'p',
+    ...         'ending_point_value': 5
     ...     },
     ...     'isentropic': {
     ...         'isoline_property': 's',
-    ...         'isoline_value': 4700,
-    ...         'starting_point_property': 'T',
-    ...         'starting_point_value': -20,
-    ...         'ending_point_property': 'T',
-    ...         'ending_point_value': 150
+    ...         'isoline_value': 2500,
+    ...         'starting_point_property': 'p',
+    ...         'starting_point_value': 1,
+    ...         'ending_point_property': 'p',
+    ...         'ending_point_value': 80
     ...     }
     ... }
 
@@ -268,22 +271,23 @@ property of your diagram, e.g. to the :code:`plot()` method.
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
     >>> mydata = {
     ...     'Q': {'values': np.linspace(0, 1, 11)},
-    ...     'T': {'values': np.arange(-50, 201, 25)}
+    ...     'T': {'values': np.arange(-75, 150, 25)}
     ... }
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e-1, y_max=2e2)
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=1000, y_min=1e-1, y_max=1.5e2)
     >>> for key, specs in data.items():
     ...     datapoints = specs['datapoints']
     ...     _ = ax.plot(specs['datapoints']['h'], specs['datapoints']['p'], label=key)
-    >>> _ = ax.legend(loc='lower right');
+    >>> _ = ax.legend(loc='lower right')
     >>> plt.tight_layout()
     >>> fig.savefig('logph_R290_isolines.svg')
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=0, x_max=7000, y_min=-50, y_max=201)
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=750, x_max=3000, y_min=-50, y_max=150)
     >>> for key, specs in data.items():
     ...     datapoints = specs['datapoints']
     ...     _ = ax.plot(specs['datapoints']['s'], specs['datapoints']['T'], label=key)
     >>> _ = ax.legend(loc='lower right')
+    >>> plt.tight_layout()
     >>> fig.savefig('Ts_R290_isolines.svg')
 
 .. figure:: reference/_images/logph_R290_isolines.svg
@@ -302,7 +306,7 @@ property of your diagram, e.g. to the :code:`plot()` method.
 On top of that, e.g. in order to display a pressure loss in a heat exchanger,
 you can have different values for the (iso)line at the starting and the ending
 points. The (then former) isoline property will be changed linearly to either
-change in entropy (for isobars and isothermals) or change in pressure (for all
+change in entropy (for isobars and isotherms) or change in pressure (for all
 other lines). This functionality is only supposed to display the change in a
 beautiful way, it does not represent the actual process connecting your
 starting point with your ending point as this would require perfect knowledge
@@ -317,13 +321,13 @@ method.
     ...     'isoline_property': 'p',
     ...     'isoline_value': 10,
     ...     'isoline_value_end': 9,
-    ...     'starting_point_property': 'h',
-    ...     'starting_point_value': 350,
+    ...     'starting_point_property': 'Q',
+    ...     'starting_point_value': 0,
     ...     'ending_point_property': 'h',
-    ...     'ending_point_value': 1750
+    ...     'ending_point_value': 750
     ... }
     >>> datapoints = diagram.calc_individual_isoline(**data)
-    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=0, x_max=7000, y_min=-50, y_max=201)
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=750, x_max=3000, y_min=-50, y_max=150)
     >>> for specs in data.values():
     ...    _ = ax.plot(datapoints['s'], datapoints['T'])
     >>> plt.tight_layout()
@@ -351,7 +355,7 @@ and a Ts diagram.
     :align: center
 
 The script to generate the results is the following code snippet. Just add it
-into your plotting code and it will create the results shown. An interface
+into your plotting code, and it will create the results shown. An interface
 automatically generating a dictionary for every component of the network is
 planned in future versions of TESPy.
 
@@ -405,29 +409,33 @@ planned in future versions of TESPy.
     >>> mydata = {
     ...     'Q': {'values': np.linspace(0, 1, 11)},
     ...     'T': {
-    ...         'values': np.arange(-25, 226, 25),
+    ...         'values': np.arange(-25, 150, 25),
     ...         'style': {'color': '#000000'}
     ...     }
     ... }
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=2100, y_min=1e0, y_max=2e2)
+    >>> diagram.set_isolines(T=mydata["T"]["values"], Q=mydata["Q"]["values"])
+    >>> diagram.calc_isolines()
+    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=100, x_max=800, y_min=1e0, y_max=1e2)
 
     >>> for key in tespy_results.keys():
     ...    datapoints = tespy_results[key]['datapoints']
     ...    _ = ax.plot(datapoints['h'], datapoints['p'], color='#ff0000')
     ...    _ = ax.scatter(datapoints['h'][0], datapoints['p'][0], color='#ff0000')
+    >>> plt.tight_layout()
     >>> fig.savefig('logph_diagram_states.svg')
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=2000, x_max=7000, y_min=-50, y_max=225)
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=750, x_max=2500, y_min=-50, y_max=150)
 
     >>> for key in tespy_results.keys():
     ...     datapoints = tespy_results[key]['datapoints']
     ...     _ = ax.plot(datapoints['s'], datapoints['T'], color='#ff0000')
     ...     _ = ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
+    >>> plt.tight_layout()
     >>> fig.savefig('Ts_diagram_states.svg')
 
 .. note::
 
     The values for plotting must be passed in the diagrams unit system.
 
-.. [1] Witte, F., 2020. Thermal Engineering Systems in Python (Version v0.4.4). Zenodo. http://doi.org/10.5281/zenodo.5101409
+.. [1] Witte, F.; Tuschy, I. (2020). TESPy: Thermal Engineering Systems in Python. Journal of Open Source Software, 5(49), 2178, https://doi.org/10.21105/joss.02178.

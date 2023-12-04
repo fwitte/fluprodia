@@ -17,9 +17,6 @@ fluprodia is licensed under the MIT software license.
 
     * - docs
       - |docs|
-    * - tests
-      - | |travis|
-        | |coveralls|
     * - package
       - | |version| |wheel|
         | |supported-versions|
@@ -78,7 +75,7 @@ Installation and Usage
     >>> diagram = FluidPropertyDiagram(fluid='R290')
     >>> diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
     >>> diagram.calc_isolines()
-    >>> diagram.draw_isolines(diagram_type='logph', fig=fig, ax=ax, x_min=0, x_max=2000, y_min=1e-1, y_max=2e2)
+    >>> diagram.draw_isolines(diagram_type='logph', fig=fig, ax=ax, x_min=0, x_max=800, y_min=1e-1, y_max=1e2)
     >>> plt.tight_layout()
     >>> fig.savefig('logph_diagram_R290.png', dpi=300)
     >>> fig.savefig('logph_diagram_R290.svg')
@@ -90,7 +87,7 @@ Documentation
 =============
 
 For further examples and usage please refer to the online documentation at
-https://fluprodia.readthedocs.io/en/latest/.
+https://fluprodia.readthedocs.io/.
 
 Citation
 ========
