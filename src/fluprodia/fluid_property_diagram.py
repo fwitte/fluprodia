@@ -360,7 +360,7 @@ class FluidPropertyDiagram:
         self.s_max = self.state.smass()
         self.h_max = self.state.hmass()
 
-        self.state.update(CP.PQ_INPUTS, self.p_trip + 1, 0)
+        self.state.update(CP.QT_INPUTS, 0, self.T_trip + 1)
         self.s_min = self.state.smass()
         self.h_min = self.state.hmass()
 
@@ -787,7 +787,10 @@ class FluidPropertyDiagram:
             datapoints[key] = np.asarray(datapoints[key])
 
         data = self.get_Q_crossings(datapoints, 'p', rising)
-        return self.insert_Q_crossings(datapoints, 'p', data)
+        if len(data) == 0:
+            return datapoints
+        else:
+            return self.insert_Q_crossings(datapoints, 'p', data)
 
     def single_isochoric(self, iterator, D):
         """Calculate an isoline of constant specific volume."""
