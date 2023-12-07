@@ -1,11 +1,9 @@
-========
-Contents
-========
+.. include:: README.rst
 
 .. toctree::
    :maxdepth: 3
+   :hidden:
 
-   readme
    installation
    usage
    reference/index

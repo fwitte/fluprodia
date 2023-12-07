@@ -84,7 +84,7 @@ Then you can plot the data to different types of plots, e.g. logph diagram:
     >>> fig.savefig('logph_diagram_H2O.svg')
     >>> fig.savefig('logph_diagram_H2O.png', dpi=300)
 
-.. figure:: docs/reference/_images/logph_diagram_H2O.png
+.. figure:: /reference/_images/logph_diagram_H2O.png
     :align: center
 
 Or, a Ts-diagram:
@@ -97,7 +97,7 @@ Or, a Ts-diagram:
     >>> fig.savefig('Ts_diagram_H2O.svg')
     >>> fig.savefig('Ts_diagram_H2O.png', dpi=300)
 
-.. figure:: docs/reference/_images/Ts_diagram_H2O.png
+.. figure:: /reference/_images/Ts_diagram_H2O.png
     :align: center
 
 The fluids are available through CoolProp. To generate a diagram for a new fluid
@@ -114,7 +114,7 @@ simply change the name. Isolines come with defaults as well.
     >>> fig.savefig('logph_diagram_R290.png', dpi=300)
     >>> fig.savefig('logph_diagram_R290.svg')
 
-.. figure:: docs/reference/_images/logph_diagram_R290.png
+.. figure:: /reference/_images/logph_diagram_R290.png
     :align: center
 
 Documentation

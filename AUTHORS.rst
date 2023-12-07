@@ -2,4 +2,4 @@
 Authors
 =======
 
-* Francesco Witte - https://github.com/fwitte/fluprodia
+* Francesco Witte - https://github.com/fwitte

@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 import os
+import sys
 import fluprodia
 
 
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('..'))
+
+# -- General configuration ------------------------------------------------
+
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# ones.
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
@@ -14,36 +25,100 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
+    'sphinx_copybutton',
+    'sphinx_design',
 ]
-source_suffix = '.rst'
-master_doc = 'index'
+
+# landing page
+# master_doc = 'contents'
+# names, years, etc
 project = 'fluprodia'
 year = '2023'
 author = 'Francesco Witte'
 copyright = '{0}, {1}'.format(year, author)
 
-version = release = fluprodia.__version__
+# The short X.Y version.
+version = fluprodia.__version__.split(' ')[0]
+# The full version, including alpha/beta/rc tags.
+release = fluprodia.__version__
 
-pygments_style = 'trac'
-templates_path = ['.']
+# The suffix of source filenames.
+source_suffix = '.rst'
+# folder for templates
+templates_path = ['_templates']
+
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build']
+
+# links to github
+github_repo_url = "https://github.com/fwitte/fluprodia"
 extlinks = {
-    'issue': ('https://github.com/fwitte/fluprodia/issues/%s', '#'),
-    'pr': ('https://github.com/fwitte/fluprodia/pull/%s', 'PR #'),
+    "issue": (f"{github_repo_url}/issues/%s", "#%s"),  # noqa: WPS323
+    "pr": (f"{github_repo_url}/pull/%s", "PR #%s"),  # noqa: WPS323
+    "commit": (f"{github_repo_url}/commit/%s", "%s"),  # noqa: WPS323
 }
-# on_rtd is whether we are on readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
-if not on_rtd:  # only set the theme if we're building docs locally
-    html_theme = 'sphinx_rtd_theme'
+# -- Options for HTML output ----------------------------------------------
 
+# The theme to use for HTML and HTML Help pages.
+html_theme = 'furo'
+
+# The name for this set of Sphinx documents.  If None, it defaults to
+# "<project> v<release> documentation".
+
+
+# A shorter title for the navigation bar.  Default is the same as html_title.
+html_short_title = '%s-%s' % (project, version)
+
+# Some more stuff
 html_use_smartypants = True
 html_last_updated_fmt = '%b %d, %Y'
 html_split_index = False
+
+# The name of an image file (within the static path) to use as favicon of the
+# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+#html_favicon = None
+
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = ['_static']
+html_css_files = [
+    'css/custom.css',
+]
+# html_additional_pages = {
+#     "index": "index.html"
+# }
+
 html_sidebars = {
-   '**': ['searchbox.html', 'globaltoc.html', 'sourcelink.html'],
+    '**': [
+        'sidebar/brand.html',
+        'sidebar/search.html',
+        'sidebar/scroll-start.html',
+        'sidebar/navigation.html',
+        'sidebar/ethical-ads.html',
+        'sidebar/scroll-end.html',
+        'sidebar/variant-selector.html',
+    ],
 }
-html_short_title = '%s-%s' % (project, version)
+
+html_theme_options = {
+    "light_logo": "./images/logo_fluprodia_small.svg",
+    "dark_logo": "./images/logo_fluprodia_small_darkmode.svg",
+}
+
+
+html_favicon = './_static/images/logo_fluprodia_small.svg'
 
 napoleon_use_ivar = True
 napoleon_use_rtype = False
 napoleon_use_param = False
+
+# copybutton configuration
+copybutton_prompt_text = r'>>> |\.\.\. '
+copybutton_prompt_is_regexp = True
+
+# Output file base name for HTML help builder.
+htmlhelp_basename = 'fluprodia_doc'

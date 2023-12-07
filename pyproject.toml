@@ -51,12 +51,12 @@ Changelog = "https://fluprodia.readthedocs.io/en/latest/changelog.html"
 dev = [
     "build",
     "flit",
+    "furo",
     "matplotlib",
     "pytest",
     "sphinx>=7.2.2",
     "sphinx-copybutton",
     "sphinx-design",
-    "sphinxcontrib.bibtex",
     "tespy"
 ]
 
