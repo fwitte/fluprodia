@@ -822,7 +822,10 @@ class FluidPropertyDiagram:
             datapoints[key] = np.asarray(datapoints[key])
 
         data = self.get_Q_crossings(datapoints, 'v', rising)
-        return self.insert_Q_crossings(datapoints, 'v', data)
+        if len(data) == 0:
+            return datapoints
+        else:
+            return self.insert_Q_crossings(datapoints, 'v', data)
 
     def single_isothermal(self, iterator, T):
         """Calculate an isoline of constant temperature."""
@@ -865,7 +868,10 @@ class FluidPropertyDiagram:
             datapoints[key] = np.asarray(datapoints[key])
 
         data = self.get_Q_crossings(datapoints, 'T', rising)
-        return self.insert_Q_crossings(datapoints, 'T', data)
+        if len(data) == 0:
+            return datapoints
+        else:
+            return self.insert_Q_crossings(datapoints, 'T', data)
 
     def single_isenthalpic(self, iterator, h):
         """Calculate an isoline of constant specific enthalpy."""
