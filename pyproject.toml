@@ -14,8 +14,7 @@ exclude = ["docs/_build"]
 
 [project]
 name = "fluprodia"
-version = "2.2"
-description = "Create beautiful fluid property diagrams using CoolProp and matplotlib"
+dynamic = ["version", "description"]
 readme = "README.rst"
 authors = [
     {name = "Francesco Witte", email = "tespy@witte.sh"},
