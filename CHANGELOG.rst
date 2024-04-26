@@ -2,10 +2,16 @@
 Changelog
 =========
 
+v3.0 (April, 26, 2024)
+----------------------
+
+* You can export the underlying data of your diagram using the `to_json` method.
+
 v2.0 (November, 22, 2023)
 -------------------------
+
 * The API changed in a way, that you have to create the figure and axes
-  externally using matplolib. These are then passed to the `draw_isolines`
+  externally using matplotlib. These are then passed to the `draw_isolines`
   method. See the README or in the examples for the new API version.
 
 v1.6 (December, 02, 2022)
@@ -28,7 +34,7 @@ v1.4 (July, 28, 2021)
 v1.3 (January, 7, 2021)
 -----------------------
 
-* Reduce the number of datappoints for isolines to 200 for faster performance.
+* Reduce the number of datapoints for isolines to 200 for faster performance.
 
 v1.2 (December, 8, 2020)
 ------------------------
