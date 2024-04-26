@@ -438,4 +438,12 @@ planned in future versions of TESPy.
 
     The values for plotting must be passed in the diagrams unit system.
 
+Export the underlying data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can export the underlying data in :code:`json` format:
+
+.. code-block:: python
+
+    >>> diagram.to_json("diagram.json")
+
 .. [1] Witte, F.; Tuschy, I. (2020). TESPy: Thermal Engineering Systems in Python. Journal of Open Source Software, 5(49), 2178, https://doi.org/10.21105/joss.02178.

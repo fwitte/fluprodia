@@ -9,9 +9,13 @@ src/fluprodia/fluid_property_diagram.py
 
 SPDX-License-Identifier: MIT
 """
+import json
+import os
 
 import CoolProp as CP
 import numpy as np
+
+from fluprodia import __version__
 
 
 def _beautiful_unit_string(unit):
@@ -150,6 +154,10 @@ class FluidPropertyDiagram:
     ... )
     >>> plt.tight_layout()
     >>> fig.savefig('Ts_Diagramm.pdf')
+
+    It is also possible to export the data of a diagram:
+
+    >>> diagram.to_json("./tmp/water.json")
     """
 
     def __init__(self, fluid):
@@ -597,6 +605,29 @@ class FluidPropertyDiagram:
                 iterator, np.ones(len(iterator)) * s
             )
 
+    def to_json(self, path):
+        data = {
+            prop: {
+                f"{isoline}": {
+                    subprop: list(getattr(self, prop)[isoline][subprop].astype(float))
+                    for subprop in getattr(self, prop)[isoline]
+                } for isoline in getattr(self, prop)["isolines"]
+            } for prop in self.properties.values()
+        }
+
+        data["META"] = {
+            "fluid": self.fluid,
+            "CoolProp-version": CP.__version__,
+            "fluprodia-version": __version__
+        }
+
+        directory = os.path.dirname(path)
+        if directory != "" and not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2))
+
     def calc_individual_isoline(
             self, isoline_property=None,
             isoline_value=None,
@@ -996,17 +1027,35 @@ class FluidPropertyDiagram:
 
         return datapoints
 
-    def draw_isolines(self, fig, ax, diagram_type, x_min, x_max, y_min, y_max, isoline_data={}):
-        """Draw the isolines of a specific diagram type.
+    def draw_isolines(self, fig, ax, diagram_type, x_min, x_max, y_min, y_max, isoline_data=None):
+        """_summary_
 
         Parameters
         ----------
-        diagram_type : str
-            Which type of diagram should be drawn.
+        fig : matplotlib.pyplot.figure
+            Figure to draw into
 
-        isoline_data : dict
-            Dictionary holding additional data on the isolines to be drawn.
-            These are
+        ax : matplotlib.pyplot.axes
+            Axes to draw into
+
+        diagram_type : str
+            Name of the diagram
+
+        x_min : number
+            Minimum for x range
+
+        x_max : number
+            Maximum for x range
+
+        y_min : number
+            Minimum for y range
+
+        y_max : number
+            Maximum for y range
+
+        isoline_data : dict, optional
+            Dictionary holding additional data on the isolines to be drawn,
+            by default None. These are
 
             - the isoline values with key :code:`values` and
             - the isoline style with key :code:`style`.
@@ -1016,6 +1065,9 @@ class FluidPropertyDiagram:
             https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
             for more information.
         """
+        if isoline_data is None:
+            isoline_data = {}
+
         self._check_diagram_types(diagram_type)
 
         x_scale = self.supported_diagrams[diagram_type]['x_scale']
