@@ -629,7 +629,7 @@ class FluidPropertyDiagram:
             os.makedirs(directory)
 
         with open(path, "w", encoding="utf-8") as f:
-            f.write(json.dumps(data, indent=2))
+            json.dump(data, f, indent=2)
 
     def calc_individual_isoline(
             self, isoline_property=None,
