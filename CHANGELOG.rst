@@ -2,6 +2,11 @@
 Changelog
 =========
 
+v3.1 (May, 23, 2024)
+--------------------
+
+* The `draw_isolines` method is now compatible with matplotlib darkmode style.
+
 v3.0 (April, 26, 2024)
 ----------------------
 
