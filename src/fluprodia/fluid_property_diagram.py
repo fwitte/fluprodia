@@ -484,28 +484,31 @@ class FluidPropertyDiagram:
             alpha = 0
         else:
             if ax.get_xscale() == 'log':
-                x_scaled = (np.log(x[idx]) - np.log(x[idx - 1])) * (
-                    width / (np.log(x_max) - np.log(x_min)))
+                x_scaled = (
+                    (np.log(x[idx]) - np.log(x[idx - 1]))
+                    * (width / (np.log(x_max) - np.log(x_min)))
+                )
             else:
-                x_scaled = (x[idx] - x[idx - 1]) * (
-                    width / (x_max - x_min))
+                x_scaled = (x[idx] - x[idx - 1]) * (width / (x_max - x_min))
 
             if ax.get_yscale() == 'log':
-                y_scaled = (np.log(y[idx]) - np.log(y[idx - 1])) * (
-                    height / (np.log(y_max) - np.log(y_min)))
+                y_scaled = (
+                    (np.log(y[idx]) - np.log(y[idx - 1]))
+                    * (height / (np.log(y_max) - np.log(y_min)))
+                )
             else:
-                y_scaled = (y[idx] - y[idx - 1]) * (
-                    height / (y_max - y_min))
+                y_scaled = (y[idx] - y[idx - 1]) * (height / (y_max - y_min))
 
             alpha = np.arctan(y_scaled / x_scaled) / (2 * np.pi) * 360
 
         unit = _beautiful_unit_string(self.units[property])
 
-        txt = str(isoline) + ' ' + unit
+        txt = f'{isoline} {unit}'
+        text_bg_color = ax.get_facecolor()
         ax.text(
             x[idx], y[idx], txt, fontsize=5,
             rotation=alpha, va='center', ha='center',
-            bbox=dict(facecolor='white', edgecolor='white', pad=0.0)
+            bbox=dict(facecolor=text_bg_color, edgecolor=text_bg_color, pad=0.0)
         )
 
     def calc_isolines(self):
@@ -1138,10 +1141,8 @@ class FluidPropertyDiagram:
 
                 gap = np.where(np.diff(indices) > 1)[0]
                 if len(gap) > 0:
-                    indices = np.insert(
-                        indices, gap + 1, indices[gap] + 1)
-                    indices = np.insert(
-                        indices, gap + 2, indices[gap + 2] - 1)
+                    indices = np.insert(indices, gap + 1, indices[gap] + 1)
+                    indices = np.insert(indices, gap + 2, indices[gap + 2] - 1)
 
                 if indices[0] != 0:
                     indices = np.insert(indices, 0, indices[0] - 1)
