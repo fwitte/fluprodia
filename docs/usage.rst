@@ -54,6 +54,11 @@ for their x- and y-axes.
 
 .. figure:: reference/_images/Ts_diagram.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/Ts_diagram_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 As all fluid properties will be stored in the object referenced by
 :code:`diagram`, it is possible to change the diagram type and export a new
@@ -70,6 +75,11 @@ call, you need to recalculate the isolines.
 
 .. figure:: reference/_images/logph_diagram.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_diagram_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 All available diagram types can be displayed by printing the following line.
 
@@ -131,6 +141,11 @@ be a dictionary holding the required information.
 
 .. figure:: reference/_images/logph_R290_full.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_R290_full_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 Now, for the zoomed diagram we want the full temperature and vapor mass
 fraction data. At the same time, you might want to change the color or the
@@ -155,6 +170,11 @@ numpy array.
 
 .. figure:: reference/_images/logph_R290_zoomed.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_R290_zoomed_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 .. note::
 
@@ -192,6 +212,11 @@ of each isoline within the limits of the view.
 
 .. figure:: reference/_images/logph_R290_zoomed_temperature_labels.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_R290_zoomed_temperature_labels_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 .. note::
 
@@ -292,9 +317,19 @@ property of your diagram, e.g. to the :code:`plot()` method.
 
 .. figure:: reference/_images/logph_R290_isolines.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_R290_isolines_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 .. figure:: reference/_images/Ts_R290_isolines.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/Ts_R290_isolines_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 .. note::
 
@@ -335,6 +370,11 @@ method.
 
 .. figure:: reference/_images/Ts_R290_pressure_loss.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/Ts_R290_pressure_loss_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 Plotting States into the Diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -350,9 +390,19 @@ and a Ts diagram.
 
 .. figure:: reference/_images/logph_diagram_states.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_diagram_states_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 .. figure:: reference/_images/Ts_diagram_states.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/Ts_diagram_states_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 The script to generate the results is the following code snippet. Just add it
 into your plotting code, and it will create the results shown. An interface

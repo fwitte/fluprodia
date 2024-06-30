@@ -86,6 +86,11 @@ Then you can plot the data to different types of plots, e.g. logph diagram:
 
 .. figure:: /reference/_images/logph_diagram_H2O.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: /reference/_images/logph_diagram_H2O_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 Or, a Ts-diagram:
 
@@ -99,6 +104,11 @@ Or, a Ts-diagram:
 
 .. figure:: /reference/_images/Ts_diagram_H2O.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: /reference/_images/Ts_diagram_H2O_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 The fluids are available through CoolProp. To generate a diagram for a new fluid
 simply change the name. Isolines come with defaults as well.
@@ -116,6 +126,11 @@ simply change the name. Isolines come with defaults as well.
 
 .. figure:: /reference/_images/logph_diagram_R290.svg
     :align: center
+    :figclass: only-light
+
+.. figure:: /reference/_images/logph_diagram_R290_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 Documentation
 =============
