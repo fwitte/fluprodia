@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v3.2 (June, 30, 2024)
+---------------------
+
+* A class method to construct a `FluidPropertyDiagram` from the `to_json` data
+  export is available.
+
 v3.1 (May, 23, 2024)
 --------------------
 
