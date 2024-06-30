@@ -4,11 +4,14 @@ build-backend = "flit_core.buildapi"
 
 [tool.flit.sdist]
 include = [
+    "AUTHORS.rst",
     "CHANGELOG.rst",
     "CONTRIBUTING.rst",
     "LICENSE",
+    ".editorconfig",
+    ".readthedocs.yml",
+    "tox.ini",
     "docs/",
-    "tests/",
 ]
 exclude = ["docs/_build"]
 
@@ -56,15 +59,11 @@ dev = [
     "sphinx>=7.2.2",
     "sphinx-copybutton",
     "sphinx-design",
-    "tespy"
+    "tespy",
+    "tox",
 ]
 
 [tool.pytest.ini_options]
-python_files = [
-    "test_*.py",
-    "*_test.py",
-    "tests.py",
-]
 addopts = """
     -ra
     --strict-markers
@@ -73,11 +72,10 @@ addopts = """
     --tb=short
     --pyargs
     --ignore=docs/conf.py
-    --ignore=docs/scripts
+    --ignore=docs/_build/
 """
 testpaths = [
     "src/",
-    "tests/",
     "docs/",
 ]
 
@@ -87,4 +85,3 @@ line_length = 120
 known_first_party = "fluprodia"
 default_section = "THIRDPARTY"
 forced_separate = "test_fluprodia"
-skip = "migrations"

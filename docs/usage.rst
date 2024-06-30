@@ -446,4 +446,10 @@ You can export the underlying data in :code:`json` format:
 
     >>> diagram.to_json("diagram.json")
 
+Finally, you can also reload a diagram from the data:
+
+.. code-block:: python
+
+    >>> diagram = FluidPropertyDiagram.from_json("diagram.json")
+
 .. [1] Witte, F.; Tuschy, I. (2020). TESPy: Thermal Engineering Systems in Python. Journal of Open Source Software, 5(49), 2178, https://doi.org/10.21105/joss.02178.

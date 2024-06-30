@@ -158,6 +158,20 @@ class FluidPropertyDiagram:
     It is also possible to export the data of a diagram:
 
     >>> diagram.to_json("./tmp/water.json")
+
+    And, if you have your data ready to use, you can import the data again like
+    this:
+
+    >>> pressure_isolines_before_export = diagram.pressure["isolines"]
+    >>> pressure_unit_before_export = diagram.units["p"]
+    >>> diagram = FluidPropertyDiagram.from_json("tmp/water.json")
+    >>> diagram.fluid
+    'water'
+    >>> diagram.units["p"] == pressure_unit_before_export
+    True
+    >>> all(diagram.pressure["isolines"] == pressure_isolines_before_export)
+    True
+
     """
 
     def __init__(self, fluid):
@@ -246,6 +260,27 @@ class FluidPropertyDiagram:
         self._setup_isoline_defaults()
         self._setup_default_line_layout()
         self._setup_default_label_positioning()
+
+    @classmethod
+    def from_json(cls, path):
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        metadata = data["META"].copy()
+        del data["META"]
+        instance = cls(metadata["fluid"])
+        instance.set_unit_system(**metadata["units"])
+        for key in data:
+            isoprop = getattr(instance, key)
+            isoprop["isolines"] = np.array([float(value) for value in data[key].keys()])
+            for isoline in data[key]:
+                datapoints = {}
+                for prop, values in data[key][isoline].items():
+                    datapoints[prop] = np.array(values)
+
+                isoprop[float(isoline)] = datapoints
+
+        return instance
 
     def _setup_functions_and_inputs(self):
         """Setup lookup tables for isoline functions and CoolProp inputs."""
@@ -345,8 +380,9 @@ class FluidPropertyDiagram:
                 obj['isolines'] = self.convert_to_SI(kwargs[key], key).round(8)
             else:
                 msg = (
-                    'The specified isoline \'' + key + '\' is not available. '
-                    'Choose from: ' + str(keys) + '.')
+                    f'The specified isoline \'{key}\' is not available. '
+                    f'Select from: {", ".join(keys)}.'
+                )
                 print(msg)
 
     def _setup_isoline_defaults(self):
@@ -620,6 +656,7 @@ class FluidPropertyDiagram:
 
         data["META"] = {
             "fluid": self.fluid,
+            "units": self.units,
             "CoolProp-version": CP.__version__,
             "fluprodia-version": __version__
         }
