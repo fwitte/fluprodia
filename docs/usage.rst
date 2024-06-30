@@ -161,7 +161,7 @@ numpy array.
     For changing the style of a specific isoline pass the respective keyword
     and value pairs in a dictionary. The keywords available are the keywords
     of a :code:`matplotlib.lines.Line2D` object. See
-    https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+    https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html
     for more information.
 
 Positioning of the isoline lables
