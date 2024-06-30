@@ -158,6 +158,20 @@ class FluidPropertyDiagram:
     It is also possible to export the data of a diagram:
 
     >>> diagram.to_json("./tmp/water.json")
+
+    And, if you have your data ready to use, you can import the data again like
+    this:
+
+    >>> pressure_isolines_before_export = diagram.pressure["isolines"]
+    >>> pressure_unit_before_export = diagram.units["p"]
+    >>> diagram = FluidPropertyDiagram.from_json("tmp/water.json")
+    >>> diagram.fluid
+    'water'
+    >>> diagram.units["p"] == pressure_unit_before_export
+    True
+    >>> all(diagram.pressure["isolines"] == pressure_isolines_before_export)
+    True
+
     """
 
     def __init__(self, fluid):
