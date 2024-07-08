@@ -2,6 +2,11 @@
 Changelog
 =========
 
+v3.3 (July, 8, 2024)
+--------------------
+
+* Make fluprodia compatible with numpy version 2.0.
+
 v3.2 (June, 30, 2024)
 ---------------------
 
