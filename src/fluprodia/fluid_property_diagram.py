@@ -1102,7 +1102,7 @@ class FluidPropertyDiagram:
 
             The islonline style is another dictionary holding keyword arguments
             of a :code:`matplotlib.lines.Line2D` object. See
-            https://matplotlib.org/api/_as_gen/matplotlib.lines.Line2D.html#matplotlib.lines.Line2D
+            https://matplotlib.org/stable/api/_as_gen/matplotlib.lines.Line2D.html
             for more information.
         """
         if isoline_data is None:
