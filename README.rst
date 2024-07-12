@@ -76,7 +76,7 @@ calculated and run the calculation:
 
 Then you can plot the data to different types of plots, e.g. logph diagram:
 
-.. code-block::
+.. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(8, 5))
     >>> diagram.draw_isolines(diagram_type='logph', fig=fig, ax=ax, x_min=0, x_max=3000, y_min=0.01, y_max=1000)
@@ -89,7 +89,7 @@ Then you can plot the data to different types of plots, e.g. logph diagram:
 
 Or, a Ts-diagram:
 
-.. code-block::
+.. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(8, 5))
     >>> diagram.draw_isolines(diagram_type='Ts', fig=fig, ax=ax, x_min=0, x_max=8000, y_min=0, y_max=700)

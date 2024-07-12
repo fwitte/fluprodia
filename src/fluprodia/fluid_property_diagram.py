@@ -93,7 +93,7 @@ class FluidPropertyDiagram:
     >>> import numpy as np
     >>> diagram = FluidPropertyDiagram('water')
 
-    After object creation it is possible to specify isolines. There are deault
+    After object creation it is possible to specify isolines. There are default
     isolines available, but these might not suit your requirements. We will
     define temperature and enthalpy isolines for this case. Before that, we
     need to specify the units if we do not want to use SI units. For available
@@ -263,7 +263,7 @@ class FluidPropertyDiagram:
 
     @classmethod
     def from_json(cls, path):
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         metadata = data["META"].copy()
@@ -446,7 +446,7 @@ class FluidPropertyDiagram:
             :code:`Pa, hPa, mbar, psi, kPa, bar, MPa`.
 
         T : str
-            Unit of temperatur, units available are
+            Unit of temperature, units available are
             :code:`K, °C, °F`.
 
         s : str
