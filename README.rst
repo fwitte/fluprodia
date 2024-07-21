@@ -67,7 +67,7 @@ calculated and run the calculation:
     >>> diagram.set_unit_system(T='°C', h='kJ/kg', p='bar')
     >>> Q = np.linspace(0, 1, 11)
     >>> T = np.arange(25, 501, 25)
-    >>> p = np.geomspace(0.01, 1000, 6) * 1e5
+    >>> p = np.geomspace(0.01, 1000, 6)
     >>> v = np.geomspace(0.001, 10, 5)
     >>> s = np.linspace(1000, 10000, 10)
     >>> h = np.linspace(0, 3600, 19)

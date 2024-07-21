@@ -285,18 +285,27 @@ class FluidPropertyDiagram:
     def _setup_functions_and_inputs(self):
         """Setup lookup tables for isoline functions and CoolProp inputs."""
         self.single_isoline_functions = {
-            'p': self._single_isobaric,
-            'v': self._single_isochoric,
-            'T': self._single_isothermal,
-            'h': self._single_isenthalpic,
-            's': self._single_isentropic
+            'p': self._single_isoline,
+            'v': self._single_isoline,
+            'T': self._single_isoline,
+            'h': self._single_isoline,
+            's': self._single_isoline
         }
         self.CoolProp_inputs = {
             'p': CP.iP,
             'v': CP.iDmass,
             'T': CP.iT,
             'h': CP.iHmass,
-            's': CP.iSmass
+            's': CP.iSmass,
+            'Q': CP.iQ
+        }
+        self.CoolProp_results = {
+            'p': self.state.p,
+            'v': self.state.rhomass,
+            'T': self.state.T,
+            'h': self.state.hmass,
+            's': self.state.smass,
+            'Q': self.state.Q
         }
 
     def _setup_datastructures(self):
@@ -436,6 +445,33 @@ class FluidPropertyDiagram:
             self.p_trip + 1e-2, self.p_max).round(8)
         self.volume['isolines'] = _isolines_log(self.v_min, self.v_max).round(8)
 
+    def set_isolines_from_pT(self):
+        pass
+
+    def _isolines_from_pT_boundaries(self):
+        pass
+
+    def _get_state_result_by_name(self, property_name):
+        if property_name == "v":
+            return 1 / self.CoolProp_results[property_name]()
+        else:
+            return self.CoolProp_results[property_name]()
+
+    def _update_state(self, input_dict):
+        output_dict = {}
+        for property_name, value in input_dict.items():
+            if property_name == "v":
+                output_dict["v"] = 1 / value
+            else:
+                output_dict[property_name] = value
+
+        args = [
+            arg for property_name, value in output_dict.items()
+            for arg in [self.CoolProp_inputs[property_name], value]
+        ]
+
+        self.state.update(*CP.CoolProp.generate_update_pair(*args))
+
     def set_unit_system(self, **kwargs):
         u"""Set the unit system for the fluid properties.
 
@@ -560,91 +596,124 @@ class FluidPropertyDiagram:
         """Calculate an isoline of constant pressure."""
         isolines = self.pressure['isolines']
 
-        iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 100))
-
         for p in isolines.round(8):
-            self.pressure[p] = self._single_isobaric(iterator, np.ones(len(iterator)) * p)
+            if p <= self.p_crit:
+                T_sat = CP.CoolProp.PropsSI("T", "P", p, "Q", 0, self.fluid)
+                iterators = [
+                    ("T", np.geomspace(self.T_trip, T_sat * 0.999, 120)),
+                    # start in liquid and end in gas
+                    ("Q", np.linspace(0, 1, 11)),
+                    ("T", np.geomspace(T_sat * 1.001, self.T_max, 69))
+                ]
+            else:
+                iterators = [
+                    ("v", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
+                    ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
+                ]
+            self.pressure[p] = self._single_isoline(iterators, "p", p)
 
     def _isochoric(self):
         """Calculate an isoline of constant specific volume."""
         isolines = self.volume['isolines']
 
-        iterator = np.append(
-            np.geomspace(self.p_trip, self.p_crit * 0.8, 100, endpoint=False),
-            np.geomspace(self.p_crit * 0.8, self.p_max, 100))
-
         for v in isolines.round(8):
-            self.volume[v] = self._single_isochoric(
-                iterator, np.ones(len(iterator)) * 1 / v)
+            if v > self.v_crit * 1.2 and v < 1e-3 / CP.CoolProp.PropsSI("D", "P", self.p_trip, "Q", 1, self.fluid):
+                p_end = CP.CoolProp.PropsSI("P", "D|twophase", 1 / v, "Q", 0.2, self.fluid)
+                T_sat = CP.CoolProp.PropsSI("T", "D|twophase", 1 / v, "Q", 1, self.fluid)
+                iterators = [
+                    ('p', np.geomspace(self.p_trip, p_end, 80)),
+                    ('Q', np.geomspace(0.2, 1, 21)),
+                    ('T', np.linspace(T_sat, self.T_max, 99))
+                ]
+            else:
+                iterators = [
+                    ('p', np.append(
+                        np.geomspace(self.p_trip, self.p_crit * 0.8, 100, endpoint=False),
+                        np.geomspace(self.p_crit * 0.8, self.p_max, 100)
+                    ))
+                ]
+
+            self.volume[v] = self._single_isoline(iterators, "v", v)
 
     def _isothermal(self):
         """Calculate an isoline of constant temperature."""
         isolines = self.temperature['isolines']
 
-        iterator = np.linspace(self.s_min, self.s_max, 200)
-
         for T in isolines.round(8):
-            self.temperature[T] = self._single_isothermal(
-                iterator, np.ones(len(iterator)) * T)
+            if T <= self.T_crit:
+                self.state.update(CP.QT_INPUTS, 0, T)
+                p_sat = self.state.p()
+                iterators = [
+                    ("p", np.geomspace(self.p_trip, p_sat * 0.999, 120)),
+                    # start in gas and end in liquid
+                    ("Q", np.linspace(1, 0, 11)),
+                    ("p", np.geomspace(p_sat * 1.001, self.p_max, 69))
+                ]
+            elif T <= self.T_crit * 1.2:
+                self.state.update(CP.PT_INPUTS, self.p_crit * 0.7, T)
+                s_start = self.state.smass()
+                self.state.update(CP.PT_INPUTS, self.p_crit * 1.2, T)
+                s_end = self.state.smass()
+                iterators = [
+                    ("p", np.geomspace(self.p_trip, self.p_crit * 0.7, 80, endpoint=False)),
+                    ("s", np.linspace(s_start, s_end, 40, endpoint=False)),
+                    ("p", np.geomspace(self.p_crit * 1.2, self.p_max, 80)),
+                ]
+            else:
+                iterators = [
+                    ("p", np.geomspace(self.p_trip, self.p_max, 200)),
+                ]
+
+            self.temperature[T] = self._single_isoline(iterators, "T", T)
 
     def _isoquality(self):
         """Calculate an isoline of constant vapor mass fraction."""
         isolines = self.quality['isolines']
 
-        iterator = np.append(
-            np.linspace(self.T_trip, self.T_crit * 0.97, 40, endpoint=False),
-            np.linspace(self.T_crit * 0.97, self.T_crit, 40))
+        iterators = [
+            ("T", np.append(
+                np.linspace(self.T_trip, self.T_crit * 0.97, 40, endpoint=False),
+                np.linspace(self.T_crit * 0.97, self.T_crit, 40)
+            ))
+        ]
 
         for Q in isolines.round(8):
-            self.quality[Q] = {
-                'h': [], 'T': [], 'p': [], 's': [], 'v': []}
-            for val in iterator:
-                try:
-                    self.state.update(CP.QT_INPUTS, Q, val)
-                    self.quality[Q]['T'] += [val]
-                    self.quality[Q]['h'] += [self.state.hmass()]
-                    self.quality[Q]['p'] += [self.state.p()]
-                    self.quality[Q]['v'] += [1 / self.state.rhomass()]
-                    self.quality[Q]['s'] += [self.state.smass()]
-                except ValueError:
-                    continue
-
-            self.quality[Q]['h'] = np.asarray(self.quality[Q]['h'])
-            self.quality[Q]['p'] = np.asarray(self.quality[Q]['p'])
-            self.quality[Q]['v'] = np.asarray(self.quality[Q]['v'])
-            self.quality[Q]['s'] = np.asarray(self.quality[Q]['s'])
-            self.quality[Q]['T'] = np.asarray(self.quality[Q]['T'])
+            self.quality[Q] = self._single_isoline(iterators, "Q", Q)
 
     def _isenthalpic(self):
         """Calculate an isoline of constant specific enthalpy."""
         isolines = self.enthalpy['isolines']
 
-        iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 100)
-        )
+        iterators = [
+            ("v", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
+            ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
+        ]
 
         for h in isolines.round(8):
-            self.enthalpy[h] = self._single_isenthalpic(
-                iterator, np.ones(len(iterator)) * h
-            )
+            self.enthalpy[h] = self._single_isoline(iterators, "h", h)
 
     def _isentropic(self):
         """Calculate an isoline of constant specific entropy."""
         isolines = self.entropy['isolines']
 
-        iterator = 1 / np.append(
-            np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False),
-            np.geomspace(self.v_intermediate, self.v_max, 100))
+        iterators = [
+            ('p', np.append(
+                np.geomspace(self.p_trip, self.p_crit * 0.8, 100, endpoint=False),
+                np.geomspace(self.p_crit * 0.8, self.p_max, 100)
+            ))
+        ]
 
         for s in isolines.round(8):
-            self.entropy[s] = self._single_isentropic(
-                iterator, np.ones(len(iterator)) * s
-            )
+            self.entropy[s] = self._single_isoline(iterators, 's', s)
 
     def to_json(self, path):
+        """Export the diagram data as json file to a path.
+
+        Parameters
+        ----------
+        path : str, path-like
+            Name of the file to export the data to.
+        """
         data = {
             prop: {
                 f"{isoline}": {
@@ -739,92 +808,107 @@ class FluidPropertyDiagram:
             )
 
         starting_point_value = self.convert_to_SI(
-            starting_point_value, starting_point_property)
+            starting_point_value, starting_point_property
+        )
         ending_point_value = self.convert_to_SI(
-            ending_point_value, ending_point_property)
+            ending_point_value, ending_point_property
+        )
+
+        isoline_vector = np.linspace(isoline_value, isoline_value_end, 100)
 
         if isoline_property == 'v':
-            isoline_value = 1 / isoline_value
-            isoline_value_end = 1 / isoline_value_end
-            isoline_property = 'D'
-        if starting_point_property == 'v':
-            starting_point_value = 1 / starting_point_value
-            starting_point_property = 'D'
-        if ending_point_property == 'v':
-            ending_point_value = 1 / ending_point_value
-            ending_point_property = 'D'
-
-        if isoline_property == 'D':
 
             if starting_point_property == 'p':
                 pressure_start = starting_point_value
             else:
-                pressure_start = CP.CoolProp.PropsSI(
-                    'P', starting_point_property.upper(),
-                    starting_point_value, 'D', isoline_value, self.fluid
-                )
+                self._update_state({
+                    starting_point_property: starting_point_value,
+                    isoline_property: isoline_value
+                })
+                pressure_start = self.state.p()
 
             if ending_point_property == 'p':
                 pressure_end = ending_point_value
             else:
-                pressure_end = CP.CoolProp.PropsSI(
-                    'P', ending_point_property.upper(),
-                    ending_point_value, 'D', isoline_value_end, self.fluid
-                )
+                self._update_state({
+                    ending_point_property: ending_point_value,
+                    isoline_property: isoline_value_end
+                })
+                pressure_end = self.state.p()
 
-            iterator = np.geomspace(pressure_start, pressure_end, 100)
+            iterator = [("p", np.geomspace(pressure_start, pressure_end, 100))]
 
         elif isoline_property == 'T':
             if starting_point_property == 's':
                 entropy_start = starting_point_value
             else:
-                entropy_start = CP.CoolProp.PropsSI(
-                    'S', starting_point_property.upper(),
-                    starting_point_value, isoline_property.upper(),
-                    isoline_value, self.fluid
-                )
+                self._update_state({
+                    starting_point_property: starting_point_value,
+                    isoline_property: isoline_value
+                })
+                entropy_start = self.state.smass()
 
             if ending_point_property == 's':
                 entropy_end = ending_point_value
             else:
-                entropy_end = CP.CoolProp.PropsSI(
-                    'S', ending_point_property.upper(),
-                    ending_point_value, isoline_property.upper(),
-                    isoline_value_end, self.fluid
-                )
+                self._update_state({
+                    ending_point_property: ending_point_value,
+                    isoline_property: isoline_value_end
+                })
+                entropy_end = self.state.smass()
 
-            iterator = np.linspace(entropy_start, entropy_end, 100)
+            iterator = [("s", np.linspace(entropy_start, entropy_end, 100))]
 
         else:
-            if starting_point_property == 'D':
-                density_start = starting_point_value
+            if starting_point_property == 'v':
+                density_start = 1 / starting_point_value
             else:
                 density_start = CP.CoolProp.PropsSI(
-                    'D', starting_point_property.upper(),
-                    starting_point_value, isoline_property.upper(),
-                    isoline_value, self.fluid
+                    "D",
+                    starting_point_property.upper(),
+                    starting_point_value,
+                    isoline_property.upper(),
+                    isoline_value,
+                    self.fluid
                 )
+                # self._update_state({
+                #     starting_point_property: starting_point_value,
+                #     isoline_property: isoline_value_end
+                # })
+                # density_start = self.state.rhomass()
 
-            if ending_point_property == 'D':
-                density_end = ending_point_value
+            if ending_point_property == 'v':
+                density_end = 1 / ending_point_value
             else:
                 density_end = CP.CoolProp.PropsSI(
-                    'D', ending_point_property.upper(),
-                    ending_point_value, isoline_property.upper(),
-                    isoline_value_end, self.fluid
+                    "D",
+                    ending_point_property.upper(),
+                    ending_point_value,
+                    isoline_property.upper(),
+                    isoline_value_end,
+                    self.fluid
+                )
+                # this produces a different result, no idea why
+                # self._update_state({
+                #     ending_point_property: ending_point_value,
+                #     isoline_property: isoline_value_end
+                # })
+                # density_end = self.state.rhomass()
+
+            if isoline_property == 'p':
+                density_range = np.geomspace(density_start, density_end, 100)
+                density_change = np.append(
+                    0, np.diff(density_range)[::-1]
+                    / (density_range[0] - density_range[-1])
+                )
+                isoline_vector = (
+                    isoline_value + density_change.cumsum()
+                    * ( isoline_value - isoline_value_end)
                 )
 
-            iterator = np.geomspace(density_start, density_end, 100)
+            iterator = [("v", 1 / np.geomspace(density_start, density_end, 100))]
 
-        if isoline_property == 'p':
-            density_change = np.append(
-                0, np.diff(iterator)[::-1] / (iterator[0] - iterator[-1]))
-            isoline_vector = isoline_value + density_change.cumsum() * (
-                isoline_value - isoline_value_end)
-        else:
-            isoline_vector = np.linspace(isoline_value, isoline_value_end, 100)
-
-        datapoints = f(iterator, isoline_vector)
+        datapoints = f(iterator, isoline_property, isoline_vector)
 
         for key in datapoints.keys():
             datapoints[key] = self.convert_from_SI(datapoints[key], key)
@@ -943,6 +1027,56 @@ class FluidPropertyDiagram:
         else:
             return self._insert_Q_crossings(datapoints, 'T', data)
 
+    def _single_isoline(self, iterators, isoline_property, isoline_value):
+        """Calculate an isoline of constant temperature."""
+        datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': [], 'Q': []}
+
+        num_points = sum([len(_[1]) for _ in iterators])
+        if isinstance(isoline_value, float):
+            datapoints[isoline_property] = np.ones(num_points) * isoline_value
+        else:
+            if len(isoline_value) != num_points:
+                msg = (
+                    "If you pass an array of isoline values instead of a "
+                    "single value, the array length must match the length of "
+                    "all iterators."
+                )
+                raise ValueError(msg)
+            datapoints[isoline_property] = isoline_value
+
+        for iterator_property, iterator_values in iterators:
+            # this is necessary because when changing the iterator
+            # CoolProp sometimes cannot find values
+            self.state.unspecify_phase()
+
+            datapoints[iterator_property] += iterator_values.tolist()
+
+            result_properties = (
+                set(datapoints.keys())
+                - {iterator_property, isoline_property}
+            )
+            for isoline_value, value in zip(datapoints[isoline_property], iterator_values):
+                try:
+                    self._update_state({
+                        isoline_property: isoline_value,
+                        iterator_property: value
+                    })
+                    success = True
+                except ValueError as e:
+                    success = False
+
+                result = np.nan
+                for result_property in result_properties:
+                    if success:
+                        result = self._get_state_result_by_name(result_property)
+
+                    datapoints[result_property] += [result]
+
+        for key in set(datapoints.keys()) - {isoline_property}:
+            datapoints[key] = np.asarray(datapoints[key])
+
+        return datapoints
+
     def _single_isenthalpic(self, iterator, h):
         """Calculate an isoline of constant specific enthalpy."""
         datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': []}
@@ -1038,8 +1172,8 @@ class FluidPropertyDiagram:
                 value = 1 / value
             try:
                 self.state.update(*CP.CoolProp.generate_update_pair(
-                    self.CoolProp_inputs[property], value, CP.iQ, Q)
-                )
+                    self.CoolProp_inputs[property], value, CP.iQ, Q
+                ))
             except ValueError:
                 continue
 
