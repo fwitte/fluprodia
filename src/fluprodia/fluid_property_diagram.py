@@ -1006,6 +1006,35 @@ class FluidPropertyDiagram:
         else:
             return self._insert_Q_crossings(datapoints, 'T', data)
 
+    def _single_isoline(self, iterators, isoline_property, isoline_value):
+        """Calculate an isoline of constant temperature."""
+        datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': [], 'Q': []}
+
+        num_points = sum([len(_[1]) for _ in iterators])
+        datapoints[isoline_property] = np.ones(num_points) * isoline_value
+        for iterator_property, iterator_values in iterators:
+            self.state.unspecify_phase()
+            datapoints[iterator_property] += iterator_values.tolist()
+
+            for value in iterator_values:
+                try:
+                    self._update_state({isoline_property: isoline_value, iterator_property: value})
+                    success = True
+                except ValueError as e:
+                    success = False
+
+                result = np.nan
+                for result_property in set(datapoints.keys()) - {iterator_property, isoline_property}:
+                    if success:
+                        result = self._get_state_result_by_name(result_property)
+
+                    datapoints[result_property] += [result]
+
+        for key in set(datapoints.keys()) - {isoline_property}:
+            datapoints[key] = np.asarray(datapoints[key])
+
+        return datapoints
+
     def _single_isenthalpic(self, iterator, h):
         """Calculate an isoline of constant specific enthalpy."""
         datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': []}
