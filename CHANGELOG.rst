@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v3.4 (October, 6, 2024)
+-----------------------
+
+* Refactor the generators for the isolines to make them more resilient and
+  distribute points better within the given range of each isoline.
+
 v3.3 (July, 8, 2024)
 --------------------
 
