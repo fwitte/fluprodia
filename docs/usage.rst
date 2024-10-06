@@ -135,11 +135,19 @@ points are distributed on the full range otherwise.
     >>> plt.tight_layout()
     >>> fig.savefig('Ts_R290_isolines_subsection.svg')
 
-.. figure:: reference/_images/logph_R290_subsection.svg
+.. figure:: reference/_images/logph_R290_isolines_subsection.svg
     :align: center
     :figclass: only-light
 
-.. figure:: reference/_images/logph_R290_subsection_darkmode.svg
+.. figure:: reference/_images/logph_R290_isolines_subsection_darkmode.svg
+    :align: center
+    :figclass: only-dark
+
+.. figure:: reference/_images/Ts_R290_isolines_subsection.svg
+    :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/Ts_R290_isolines_subsection_darkmode.svg
     :align: center
     :figclass: only-dark
 
