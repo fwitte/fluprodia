@@ -16,7 +16,6 @@ import CoolProp as CP
 import numpy as np
 
 from . import __version__
-
 from ._utils import _beautiful_unit_string
 from ._utils import _isolines_log
 from ._utils import _linear_range
