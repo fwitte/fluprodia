@@ -7,6 +7,8 @@ v3.4 (October, 6, 2024)
 
 * Refactor the generators for the isolines to make them more resilient and
   distribute points better within the given range of each isoline.
+* Add a method that allows the creation of isolines only within a specific
+  range of the fluid properties.
 
 v3.3 (July, 8, 2024)
 --------------------
