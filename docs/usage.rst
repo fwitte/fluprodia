@@ -48,7 +48,7 @@ for their x- and y-axes.
     >>> diagram.set_isolines(T=iso_T)
     >>> diagram.calc_isolines()
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, "Ts", x_min=500, x_max=3000, y_min=-50, y_max=150)
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=500, x_max=3000, y_min=-50, y_max=150)
     >>> plt.tight_layout()
     >>> fig.savefig('Ts_diagram.svg')
 
@@ -69,7 +69,7 @@ call, you need to recalculate the isolines.
 .. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> diagram.draw_isolines(fig, ax, "logph", x_min=0, x_max=750, y_min=1e-1, y_max=1e2)
+    >>> diagram.draw_isolines(fig, ax, 'logph', x_min=0, x_max=750, y_min=1e-1, y_max=1e2)
     >>> plt.tight_layout()
     >>> fig.savefig('logph_diagram.svg')
 
@@ -93,10 +93,55 @@ Customizing the Display
 
 Customization is possible regarding
 
+- generation of isolines only within a specific region of the fluid,
 - the isovalues of the isolines,
-- the isolines displayed,
+- the isolines to be displayed,
 - the linestyle of the isolines and
 - the position of the isolines' labels.
+
+Isolines only within a specific region
+**************************************
+
+By default, every isoline is generated for the complete value space of the
+fluid properties, that means from minimum to maximum temperature, or from
+minimum to maximum pressure, density, etc.. It is possible to make a
+sub-selection of a temperature range. This automatically assigns values for
+all isolines within that range. The advantage of this implementation is that
+it can reduce the overall amount of isolines to be calculated, and that the
+amount of points per line is higher in the specified subsection, because all
+points are distributed on the full range otherwise.
+
+.. code-block:: python
+
+    >>> T_min = -75
+    >>> T_max = 150
+    >>> diagram.set_isolines_subcritical(T_min, T_max)
+    >>> diagram.calc_isolines()
+
+.. note::
+
+    This feature is new in version 3.4. It is likely, that it will be refined,
+    and more methods for other sections (transcritical and supercritical) are
+    planned.
+
+.. code-block:: python
+
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, 'logph', x_min=0, x_max=750, y_min=1e-1, y_max=1e2)
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_R290_isolines_subsection.svg')
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=500, x_max=3000, y_min=-50, y_max=150)
+    >>> plt.tight_layout()
+    >>> fig.savefig('Ts_R290_isolines_subsection.svg')
+
+.. figure:: reference/_images/logph_R290_subsection.svg
+    :align: center
+    :figclass: only-light
+
+.. figure:: reference/_images/logph_R290_subsection_darkmode.svg
+    :align: center
+    :figclass: only-dark
 
 Isoline values available
 ************************

@@ -724,7 +724,7 @@ class FluidPropertyDiagram:
                 f"{isoline}": {
                     subprop: list(getattr(self, prop)[isoline][subprop].astype(float))
                     for subprop in getattr(self, prop)[isoline]
-                } for isoline in getattr(self, prop)["isolines"]
+                } for isoline in getattr(self, prop)["isolines"].round(8)
             } for prop in self.properties.values()
         }
 
