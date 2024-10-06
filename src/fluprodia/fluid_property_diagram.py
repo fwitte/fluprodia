@@ -15,58 +15,12 @@ import os
 import CoolProp as CP
 import numpy as np
 
-from fluprodia import __version__
+from . import __version__
 
-
-def _beautiful_unit_string(unit):
-    r"""Convert unit fractions to latex.
-
-    Parameters
-    ----------
-    unit : str
-        Value of unit for input, e.g. :code:`m^3/kg`.
-
-    Returns
-    -------
-    unit : str
-        Value of unit for output, e.g. :code:`$\frac{m^3}{kg}$`.
-    """
-    if '/' in unit:
-        numerator = unit.split('/')[0]
-        denominator = unit.split('/')[1]
-        unit = '$\\frac{' + numerator + '}{' + denominator + '}$'
-
-    return unit
-
-
-def _isolines_log(val_min, val_max):
-    """Generate default logarithmic isolines.
-
-    Parameters
-    ----------
-    val_min : float
-        Minimum value for isoline range.
-
-    val_max : float
-        Maximum value for isoline range.
-
-    Returns
-    -------
-    arr : ndarray
-        numpy array with logarithmically spaced values starting from the
-        minimum value going to the maximum value in steps of :code:`1ek`,
-        :code:`2ek` and :code:`5ek`.
-    """
-    arr = [val_min]
-    digits = int(np.floor(np.log10(val_min)))
-    while arr[-1] < val_max:
-        arr += [1 * 10 ** digits]
-        arr += [2 * 10 ** digits]
-        arr += [5 * 10 ** digits]
-        digits += 1
-
-    arr = np.unique(np.asarray(arr + [val_max]))
-    return arr[(arr >= val_min) & (arr <= val_max)]
+from ._utils import _beautiful_unit_string
+from ._utils import _isolines_log
+from ._utils import _linear_range
+from ._utils import _log_range
 
 
 class FluidPropertyDiagram:
@@ -440,11 +394,50 @@ class FluidPropertyDiagram:
             self.p_min + 1e-2, self.p_max).round(8)
         self.volume['isolines'] = _isolines_log(self.v_min, self.v_max).round(8)
 
-    def set_isolines_from_pT(self):
-        pass
 
-    def _isolines_from_pT_boundaries(self):
-        pass
+    def set_isolines_subcritical(self, T_min, T_max):
+
+        T_crit = self.convert_from_SI(self.T_crit, "T")
+
+        if T_min > T_crit:
+            msg = (
+                f"{T_min = } cannot be higher than critical point "
+                f"temperature {T_crit}."
+            )
+            raise ValueError(msg)
+
+        self.temperature["isolines"] = self.convert_to_SI(_linear_range(T_min, T_max), "T")
+
+        self.T_min = min(self.temperature["isolines"])
+        self.T_max = max(self.temperature["isolines"])
+
+        p_min = CP.CoolProp.PropsSI("P", "Q", 1, "T", self.T_min, self.fluid)
+        p_max = self.p_crit * 1.1
+
+        self.pressure["isolines"] = _log_range(p_min, p_max)
+
+        self.p_min = min(self.pressure["isolines"])
+        self.p_max = max(self.pressure["isolines"])
+
+        # this is required to include the (potentially) lower pressure compared
+        # to the minimum temperature. The quality isolines are calculated over
+        # temperature
+        self.T_min = CP.CoolProp.PropsSI("T", "P", self.p_min, "Q", 1, self.fluid)
+
+        v_min = 1 / CP.CoolProp.PropsSI("D", "T", self.T_min, "P", self.p_max, self.fluid)
+        v_max = 1 / CP.CoolProp.PropsSI("D", "T", self.T_max, "P", self.p_min, self.fluid)
+        self.v_min = v_min
+        self.v_max = v_max
+
+        self.volume["isolines"] = _log_range(v_min, v_max)
+
+        s_min =  CP.CoolProp.PropsSI("S", "T", self.T_min, "P", self.p_max, self.fluid)
+        s_max =  CP.CoolProp.PropsSI("S", "T", self.T_max, "P", self.p_min, self.fluid)
+        h_min =  CP.CoolProp.PropsSI("H", "T", self.T_min, "P", self.p_max, self.fluid)
+        h_max =  CP.CoolProp.PropsSI("H", "T", self.T_max, "P", self.p_min, self.fluid)
+
+        self.entropy["isolines"] = _linear_range(s_min, s_max)
+        self.enthalpy["isolines"] = _linear_range(h_min, h_max)
 
     def _get_state_result_by_name(self, property_name):
         if property_name == "v":
@@ -1144,7 +1137,6 @@ class FluidPropertyDiagram:
             x for x in self.properties.keys()
             if x not in [x_property, y_property]
         ]
-
         for isoline in isolines:
 
             property = self.properties[isoline]
@@ -1168,7 +1160,7 @@ class FluidPropertyDiagram:
                     )
 
             for isoval in isovalues.round(8):
-                if isoval not in data['isolines']:
+                if isoval not in data['isolines'].round(8):
                     msg = (
                         f'Could not find data for {property} isoline with '
                         f'value: {isoval}.'
