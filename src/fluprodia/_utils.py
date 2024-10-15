@@ -263,3 +263,30 @@ def _beautiful_unit_string(unit):
 
     return unit
 
+
+def _hampel_filter(values, window_size, n_sigmas=3):
+
+    filtered_values = values.copy()
+    n = len(values)
+    padded_values = np.pad(values, window_size, mode='reflect')
+    outliers = np.zeros(n, dtype=bool)
+
+    for i in range(n):
+        window = padded_values[i : i + 2 * window_size + 1]
+
+        # Compute the local median and median absolute deviation (MAD)
+        local_median = np.median(window)
+        mad = np.median(np.abs(window - local_median))
+
+        # Compute the threshold based on the MAD and number of sigmas
+        # # The constant 1.4826 is for converting MAD to standard deviation
+        threshold = n_sigmas * 1.4826 * mad
+
+        # If the point deviates from the local median by more than the
+        # threshold, it is considered an outlier
+        if np.abs(values[i] - local_median) > threshold:
+            # Replace outlier with the local median
+            filtered_values[i] = local_median
+            outliers[i] = True
+
+    return filtered_values, outliers

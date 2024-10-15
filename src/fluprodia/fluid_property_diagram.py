@@ -17,6 +17,7 @@ import numpy as np
 
 from . import __version__
 from ._utils import _beautiful_unit_string
+from ._utils import _hampel_filter
 from ._utils import _isolines_log
 from ._utils import _linear_range
 from ._utils import _log_range
@@ -614,19 +615,46 @@ class FluidPropertyDiagram:
                 ))
             ]
             try:
-                cond = v < 1e-3 / CP.CoolProp.PropsSI("D", "P", self.p_trip * 2, "Q", 1, self.fluid)
-            except ValueError:
-                cond = False
-            if v > self.v_crit * 1.2 and cond:
-                p_end = CP.CoolProp.PropsSI("P", "D|twophase", 1 / v, "Q", 0.2, self.fluid)
-                T_sat = CP.CoolProp.PropsSI("T", "D|twophase", 1 / v, "Q", 1, self.fluid)
-                iterators = [
-                    ('p', np.geomspace(self.p_trip, p_end, 80)),
-                    ('Q', np.geomspace(0.2, 1, 21)),
-                    ('T', np.linspace(T_sat, self.T_max, 99))
-                ]
+                if v > self.v_crit:
+                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 1, self.fluid)
+                else:
+                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 0, self.fluid)
 
-            self.volume[v] = self._single_isoline(iterators, "v", v)
+                iterators = [
+                    ('p', np.append(
+                        np.geomspace(self.p_min, p_sat, 100, endpoint=False),
+                        np.geomspace(p_sat, self.p_max, 100)
+                    ))
+                ]
+            except ValueError:
+                pass
+
+            datapoints = self._single_isoline(iterators, "v", v)
+            mask_nan = np.isnan(datapoints["T"])
+            for prop in datapoints:
+                datapoints[prop] = datapoints[prop][~mask_nan]
+
+            mask = (datapoints["T"] < self.T_crit * 2)
+            ydata = datapoints["T"][mask]
+
+            if len(ydata) > 2:
+                _, outlier_mask = _hampel_filter(ydata, window_size=15, n_sigmas=1.5)
+
+                remove_outliers_mask = ydata < self.T_crit
+                # inser the new masks into the original one
+                mask[mask] = outlier_mask & remove_outliers_mask
+
+
+                # remove incorrect values
+                for prop in datapoints:
+                    datapoints[prop] = datapoints[prop][~mask]
+
+                # remove values with decreasing temperature
+                mask = np.append([False], np.diff(datapoints["T"]) < 0)
+                for prop in datapoints:
+                    datapoints[prop] = datapoints[prop][~mask]
+
+            self.volume[v] = datapoints
 
     def _isothermal(self):
         """Calculate an isoline of constant temperature."""
@@ -637,7 +665,7 @@ class FluidPropertyDiagram:
                 ("p", np.geomspace(self.p_min, self.p_max, 200)),
             ]
 
-            if T <= self.T_crit:
+            if T <= self.T_crit and T >= self.T_trip:
                 self.state.update(CP.QT_INPUTS, 0, T)
                 p_sat = self.state.p()
                 if self.p_min < p_sat * 0.999:
@@ -654,7 +682,7 @@ class FluidPropertyDiagram:
                         ("p", np.geomspace(p_sat * 1.001, self.p_max, 189))
                     ]
 
-            elif T <= self.T_crit * 1.2:
+            elif T <= self.T_crit * 1.2 and T >= self.T_trip:
                 self.state.update(CP.PT_INPUTS, self.p_crit * 0.7, T)
                 s_start = self.state.smass()
                 self.state.update(CP.PT_INPUTS, self.p_crit * 1.2, T)
@@ -936,7 +964,7 @@ class FluidPropertyDiagram:
         datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': [], 'Q': []}
 
         num_points = sum([len(_[1]) for _ in iterators])
-        if isinstance(isoline_value, float):
+        if np.isscalar(isoline_value):
             datapoints[isoline_property] = np.ones(num_points) * isoline_value
         else:
             if len(isoline_value) != num_points:
@@ -1033,7 +1061,6 @@ class FluidPropertyDiagram:
 
     def _insert_Q_crossings(self, datapoints, property, data):
         """Insert data of Q=0 and Q=1 crossings into specified line."""
-        rising = datapoints['s'][0] < datapoints['s'][-1]
         for Q, value in data.items():
             if property == 'v':
                 value = 1 / value
@@ -1045,27 +1072,35 @@ class FluidPropertyDiagram:
             except ValueError:
                 continue
 
-            s = self.state.smass()
+            if property == 'v':
+                T = self.state.T()
+                arg_sorted = np.argsort(datapoints['T'])
+                idx = np.searchsorted(datapoints['T'], T)
+                position = arg_sorted[idx]
+                datapoints['T'] = np.insert(datapoints['T'], position, T)
+                other_props = ['h', 'p', 's']
 
-            if rising:
-                position = np.searchsorted(datapoints['s'], s)
             else:
-                position = np.searchsorted(-datapoints['s'], -s)
+                rising = datapoints['s'][0] < datapoints['s'][-1]
+                s = self.state.smass()
+                if rising:
+                    position = np.searchsorted(datapoints['s'], s)
+                else:
+                    position = np.searchsorted(-datapoints['s'], -s)
 
-            datapoints['s'] = np.insert(datapoints['s'], position, s)
+                datapoints['s'] = np.insert(datapoints['s'], position, s)
+                other_props = {'v', 'T', 'h', 'p'} - {property}
+
             datapoints[property] = np.insert(
-                datapoints[property], position, value)
+                datapoints[property], position, value
+            )
             datapoints['Q'] = np.insert(datapoints['Q'], position, Q)
 
-            for prop in ['h', 'T', 'v', 'p']:
-                if prop != property:
-                    result = self.state.keyed_output(
-                        self.CoolProp_inputs[prop])
-                    if prop == 'v':
-                        result = 1 / result
-                    datapoints[prop] = np.insert(
-                        datapoints[prop], position, result
-                    )
+            for prop in other_props:
+                result = self.state.keyed_output(self.CoolProp_inputs[prop])
+                if prop == 'v':
+                    result = 1 / result
+                datapoints[prop] = np.insert(datapoints[prop], position, result)
 
         return datapoints
 
