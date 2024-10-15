@@ -2,6 +2,12 @@
 Changelog
 =========
 
+v3.5 (October, 15, 2024)
+------------------------
+
+* Fix a couple of bugs introduced by v3.4 and smoothen the isochorics with the
+  help of a hample filter, thanks to [@matzech](https://github.com/matzech/).
+
 v3.4 (October, 6, 2024)
 -----------------------
 
