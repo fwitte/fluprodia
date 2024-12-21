@@ -1172,12 +1172,8 @@ class FluidPropertyDiagram:
         ax.set_xscale(x_scale)
         ax.set_yscale(y_scale)
 
-        if latex_units:
-            x_label = f'{x_property} in {_beautiful_unit_string(self.units[x_property])}'
-            y_label = f'{y_property} in {_beautiful_unit_string(self.units[y_property])}'
-        else:
-            x_label = f'{x_property} in {_beautiful_unit_string(self.units[x_property])}'
-            y_label = f'{y_property} in {_beautiful_unit_string(self.units[y_property])}'
+        x_label = f'{x_property} in {_beautiful_unit_string(self.units[x_property])}'
+        y_label = f'{y_property} in {_beautiful_unit_string(self.units[y_property])}'
 
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
