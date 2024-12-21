@@ -1253,12 +1253,18 @@ class FluidPropertyDiagram:
                 if i % label_every_nth == 0:
                     isoval = self.convert_from_SI(isoval, isoline)
 
-                    self._draw_isoline_label(
-                        fig, ax,
-                        isoval.round(8), isoline,
-                        int(data['label_position'] * len(x)),
-                        x, y, x_min, x_max, y_min, y_max, latex_units
-                    )
+                    label_positions = [int(data['label_position'] * len(x))]
+                    if labels_per_line > 1:
+                        label_positions = np.linspace(
+                            0.05, 0.95, labels_per_line
+                        ) * len(x)
+                    for label_position in label_positions:
+                        self._draw_isoline_label(
+                            fig, ax,
+                            isoval.round(8), isoline,
+                            int(label_position),
+                            x, y, x_min, x_max, y_min, y_max, latex_units
+                        )
 
     def _check_diagram_types(self, diagram_type):
         if not isinstance(diagram_type, str):
