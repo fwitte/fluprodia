@@ -644,15 +644,17 @@ class FluidPropertyDiagram:
                 # inser the new masks into the original one
                 mask[mask] = outlier_mask & remove_outliers_mask
 
-
                 # remove incorrect values
                 for prop in datapoints:
                     datapoints[prop] = datapoints[prop][~mask]
 
-                # remove values with decreasing temperature
-                mask = np.append([False], np.diff(datapoints["T"]) < 0)
-                for prop in datapoints:
-                    datapoints[prop] = datapoints[prop][~mask]
+                if not mask.any():
+                    # remove values with decreasing temperature
+                    mask = np.append([False], np.diff(datapoints["T"]) < 0)
+                    if len(mask) == 0:
+                        continue
+                    for prop in datapoints:
+                        datapoints[prop] = datapoints[prop][~mask]
 
             self.volume[v] = datapoints
 
