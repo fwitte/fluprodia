@@ -224,15 +224,18 @@ class FluidPropertyDiagram:
         del data["META"]
         instance = cls(metadata["fluid"])
         instance.set_unit_system(**metadata["units"])
-        for key in data:
+        for key, value in data.items():
             isoprop = getattr(instance, key)
-            isoprop["isolines"] = np.array([float(value) for value in data[key].keys()])
-            for isoline in data[key]:
-                datapoints = {}
-                for prop, values in data[key][isoline].items():
-                    datapoints[prop] = np.array(values)
-
-                isoprop[float(isoline)] = datapoints
+            isoprop["isolines"] = {
+                int(key): value for key, value in value["isolines"].items()
+            }
+            isoprop["isoline_data"] = {
+                int(key): {
+                    subprop: np.array(datapoints)
+                    for subprop, datapoints in isoline_data.items()
+                }
+                for key, isoline_data in value["isoline_data"].items()
+            }
 
         return instance
 
@@ -801,14 +804,19 @@ class FluidPropertyDiagram:
         path : str, path-like
             Name of the file to export the data to.
         """
-        data = {
-            prop: {
-                f"{isoline}": {
-                    subprop: list(getattr(self, prop)[isoline][subprop].astype(float))
-                    for subprop in getattr(self, prop)[isoline]
-                } for isoline in getattr(self, prop)["isolines"].round(8)
-            } for prop in self.properties.values()
-        }
+        data = {}
+        for prop in self.properties.values():
+            data[prop] = {
+                "isolines": getattr(self, prop)["isolines"],
+                "isoline_data": {
+                    key: {
+                        subprop: list(datapoints)
+                        for subprop, datapoints in isoline_data.items()
+                    }
+                    for key, isoline_data
+                    in getattr(self, prop)["isoline_data"].items()
+                }
+            }
 
         data["META"] = {
             "fluid": self.fluid,
