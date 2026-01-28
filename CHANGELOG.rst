@@ -2,6 +2,19 @@
 Changelog
 =========
 
+v4.0 (under development)
+------------------------
+* Change the datastructures in the back-end to better organize the isoline data
+  storage.
+* Update example usages to the latest TESPy API
+
+v3.5.1 (January, 22, 2025)
+--------------------------
+* Fix a bug in the isochoric line calculation, when filtering out suspicious
+  values. The software crashed, when checking for non-rising temperature values
+  on a single isochoric, when no more values were left due to being filtered
+  out by the hampel filter earlier.
+
 v3.5 (October, 15, 2024)
 ------------------------
 

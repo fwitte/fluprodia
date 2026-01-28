@@ -457,56 +457,63 @@ and a Ts diagram.
     :align: center
     :figclass: only-dark
 
-The script to generate the results is the following code snippet. Just add it
-into your plotting code, and it will create the results shown. An interface
-automatically generating a dictionary for every component of the network is
-planned in future versions of TESPy.
+You can use the :code:`get_plotting_data` data method from the
+:code:`tespy.tools` module to automatically extract all data for the specified
+part of the model.
 
 .. code-block:: python
 
-    >>> from tespy.components import (Compressor, CycleCloser, SimpleHeatExchanger, Valve)
+    >>> from tespy.components import (
+    ...     Compressor, CycleCloser, SimpleHeatExchanger, Valve
+    ... )
     >>> from tespy.connections import Connection
     >>> from tespy.networks import Network
+    >>> from tespy.tools import get_plotting_data
 
 
     >>> def run_simple_heat_pump_model():
-    ...     nw = Network(T_unit='C', p_unit='bar', h_unit='kJ / kg')
-    ...     nw.set_attr(iterinfo=False)
+    ...     nw = Network(iterinfo=False)
+    ...     nw.units.set_defaults(
+    ...         temperature="°C",
+    ...         pressure="bar",
+    ...         enthalpy="kJ/kg",
+    ...         heat="kW",
+    ...         power="kW"
+    ...     )
+    ...
     ...     cp = Compressor('compressor')
     ...     cc = CycleCloser('cycle_closer')
     ...     cd = SimpleHeatExchanger('condenser')
     ...     va = Valve('expansion valve')
     ...     ev = SimpleHeatExchanger('evaporator')
     ...
-    ...     cc_cd = Connection(cc, 'out1', cd, 'in1')
-    ...     cd_va = Connection(cd, 'out1', va, 'in1')
-    ...     va_ev = Connection(va, 'out1', ev, 'in1')
-    ...     ev_cp = Connection(ev, 'out1', cp, 'in1')
-    ...     cp_cc = Connection(cp, 'out1', cc, 'in1')
+    ...     cc_cd = Connection(cc, 'out1', cd, 'in1', label='c1')
+    ...     cd_va = Connection(cd, 'out1', va, 'in1', label='c2')
+    ...     va_ev = Connection(va, 'out1', ev, 'in1', label='c3')
+    ...     ev_cp = Connection(ev, 'out1', cp, 'in1', label='c4')
+    ...     cp_cc = Connection(cp, 'out1', cc, 'in1', label='c5')
     ...
     ...     nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
     ...
-    ...     cd.set_attr(pr=0.95, Q=-1e6)
+    ...     cd.set_attr(pr=0.95, Q=-1e3)
     ...     ev.set_attr(pr=0.9)
-    ...     cp.set_attr(eta_s=0.9)
+    ...     cp.set_attr(eta_s=0.85)
     ...
     ...     cc_cd.set_attr(fluid={'R290': 1})
-    ...     cd_va.set_attr(Td_bp=-5, T=60)
-    ...     ev_cp.set_attr(Td_bp=5, T=15)
+    ...     cd_va.set_attr(td_bubble=5, T=60)
+    ...     ev_cp.set_attr(td_dew=5, T=15)
     ...     nw.solve('design')
-    ...
-    ...     result_dict = {}
-    ...     result_dict.update(
-    ...         {cp.label: cp.get_plotting_data()[1] for cp in nw.comps['object']
-    ...          if cp.get_plotting_data() is not None})
-    ...
-    ...     return result_dict
+    ...     return nw
 
 .. code-block:: python
 
-    >>> tespy_results = run_simple_heat_pump_model()
-    >>> for key, data in tespy_results.items():
-    ...    tespy_results[key]['datapoints'] = diagram.calc_individual_isoline(**data)
+    >>> nw = run_simple_heat_pump_model()
+    >>> processes, points = get_plotting_data(nw, "c1")
+    >>> processes = {
+    ...     key: diagram.calc_individual_isoline(**value)
+    ...     for key, value in processes.items()
+    ...     if value is not None
+    ... }
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
     >>> mydata = {
@@ -518,22 +525,27 @@ planned in future versions of TESPy.
     ... }
     >>> diagram.set_isolines(T=mydata["T"]["values"], Q=mydata["Q"]["values"])
     >>> diagram.calc_isolines()
-    >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=100, x_max=800, y_min=1e0, y_max=1e2)
+    >>> diagram.draw_isolines(
+    ...     fig, ax, 'logph', isoline_data=mydata,
+    ...     x_min=100, x_max=800, y_min=1e0, y_max=1e2
+    ... )
 
-    >>> for key in tespy_results.keys():
-    ...    datapoints = tespy_results[key]['datapoints']
-    ...    _ = ax.plot(datapoints['h'], datapoints['p'], color='#ff0000')
-    ...    _ = ax.scatter(datapoints['h'][0], datapoints['p'][0], color='#ff0000')
+    >>> for label, values in processes.items():
+    ...     _ = ax.plot(values["h"], values["p"], label=label, color="tab:red")
+    >>> for label, point in points.items():
+    ...     _ = ax.scatter(point["h"], point["p"], label=label, color="tab:red")
+
     >>> plt.tight_layout()
     >>> fig.savefig('logph_diagram_states.svg')
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
     >>> diagram.draw_isolines(fig, ax, 'Ts', x_min=750, x_max=2500, y_min=-50, y_max=150)
 
-    >>> for key in tespy_results.keys():
-    ...     datapoints = tespy_results[key]['datapoints']
-    ...     _ = ax.plot(datapoints['s'], datapoints['T'], color='#ff0000')
-    ...     _ = ax.scatter(datapoints['s'][0], datapoints['T'][0], color='#ff0000')
+    >>> for label, values in processes.items():
+    ...     _ = ax.plot(values["s"], values["T"], label=label, color="tab:red")
+    >>> for label, point in points.items():
+    ...     _ = ax.scatter(point["s"], point["T"], label=label, color="tab:red")
+
     >>> plt.tight_layout()
     >>> fig.savefig('Ts_diagram_states.svg')
 

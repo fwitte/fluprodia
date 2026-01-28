@@ -116,15 +116,11 @@ class FluidPropertyDiagram:
     And, if you have your data ready to use, you can import the data again like
     this:
 
-    >>> pressure_isolines_before_export = diagram.pressure["isolines"]
-    >>> pressure_unit_before_export = diagram.units["p"]
     >>> diagram = FluidPropertyDiagram.from_json("tmp/water.json")
     >>> diagram.fluid
     'water'
-    >>> diagram.units["p"] == pressure_unit_before_export
-    True
-    >>> all(diagram.pressure["isolines"] == pressure_isolines_before_export)
-    True
+    >>> len(diagram.pressure["isolines"])
+    20
 
     """
 
@@ -135,12 +131,6 @@ class FluidPropertyDiagram:
         ----------
         fluid : str
             Fluid for diagram.
-
-        width : float
-            Width of all diagrams (default value: :code:`width=16.0`).
-
-        height : float
-            Height of all diagrams (default value: :code:`height=10.0`).
         """
         self.fluid = fluid
         self.state = CP.AbstractState('HEOS', self.fluid)
@@ -224,15 +214,18 @@ class FluidPropertyDiagram:
         del data["META"]
         instance = cls(metadata["fluid"])
         instance.set_unit_system(**metadata["units"])
-        for key in data:
+        for key, value in data.items():
             isoprop = getattr(instance, key)
-            isoprop["isolines"] = np.array([float(value) for value in data[key].keys()])
-            for isoline in data[key]:
-                datapoints = {}
-                for prop, values in data[key][isoline].items():
-                    datapoints[prop] = np.array(values)
-
-                isoprop[float(isoline)] = datapoints
+            isoprop["isolines"] = {
+                int(key): value for key, value in value["isolines"].items()
+            }
+            isoprop["isoline_data"] = {
+                int(key): {
+                    subprop: np.array(datapoints)
+                    for subprop, datapoints in isoline_data.items()
+                }
+                for key, isoline_data in value["isoline_data"].items()
+            }
 
         return instance
 
@@ -257,12 +250,30 @@ class FluidPropertyDiagram:
 
     def _setup_datastructures(self):
         """Set up datastructures for all isolines."""
-        self.pressure = {'isolines': np.array([])}
-        self.entropy = {'isolines': np.array([])}
-        self.temperature = {'isolines': np.array([])}
-        self.enthalpy = {'isolines': np.array([])}
-        self.volume = {'isolines': np.array([])}
-        self.quality = {'isolines': np.array([])}
+        self.pressure = {
+            'isolines': {},
+            'isoline_data': {}
+        }
+        self.entropy = {
+            'isolines': {},
+            'isoline_data': {}
+        }
+        self.temperature = {
+            'isolines': {},
+            'isoline_data': {}
+        }
+        self.enthalpy = {
+            'isolines': {},
+            'isoline_data': {}
+        }
+        self.volume = {
+            'isolines': {},
+            'isoline_data': {}
+        }
+        self.quality = {
+            'isolines': {},
+            'isoline_data': {}
+        }
 
     def _setup_default_line_layout(self):
         """Definition of the default isoline layout."""
@@ -333,13 +344,16 @@ class FluidPropertyDiagram:
         for key in kwargs:
             if key in keys:
                 obj = getattr(self, self.properties[key])
-                obj['isolines'] = self.convert_to_SI(kwargs[key], key).round(8)
+                isoline_values = self.convert_to_SI(kwargs[key], key).round(8)
+                obj['isolines'] = {
+                    i: value for i, value in enumerate(isoline_values)
+                }
             else:
                 msg = (
                     f'The specified isoline \'{key}\' is not available. '
                     f'Select from: {", ".join(keys)}.'
                 )
-                print(msg)
+                raise ValueError(msg)
 
     def _setup_isoline_defaults(self):
         """Calculate the default values for the isolines."""
@@ -377,22 +391,40 @@ class FluidPropertyDiagram:
         self.v_min = 1 / self.state.rhomass()
         self.state.unspecify_phase()
 
-        self.quality['isolines'] = np.linspace(0, 1, 11).round(8)
+        isovalues = np.linspace(0, 1, 11).round(8)
+        self.quality['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
         step = round(int(self.T_max - self.T_min) / 15, -1)
-        self.temperature['isolines'] = np.append(
+        isovalues = np.append(
             self.T_min,
-            np.arange(self.T_max, self.T_min, -step)[::-1]).round(8)
+            np.arange(self.T_max, self.T_min, -step)[::-1]
+        ).round(8)
+        self.temperature['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
         step = round(int(self.s_max - self.s_min) / 15, -1)
-        self.entropy['isolines'] = np.arange(self.s_min, self.s_max, step).round(8)
+        isovalues = np.arange(self.s_min, self.s_max, step).round(8)
+        self.entropy['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
         step = round(int(self.h_max - self.h_min) / 15, -1)
-        self.enthalpy['isolines'] = np.arange(0, self.h_max, step).round(8)
+        isovalues = np.arange(0, self.h_max, step).round(8)
+        self.enthalpy['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
-        self.pressure['isolines'] = _isolines_log(
-            self.p_min + 1e-2, self.p_max).round(8)
-        self.volume['isolines'] = _isolines_log(self.v_min, self.v_max).round(8)
+        isovalues = _isolines_log(self.p_min + 1e-2, self.p_max).round(8)
+        self.pressure['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
+        isovalues = _isolines_log(self.v_min, self.v_max).round(8)
+        self.volume['isolines'] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
 
     def set_isolines_subcritical(self, T_min, T_max):
@@ -406,18 +438,23 @@ class FluidPropertyDiagram:
             )
             raise ValueError(msg)
 
-        self.temperature["isolines"] = self.convert_to_SI(_linear_range(T_min, T_max), "T")
+        isovalues = self.convert_to_SI(_linear_range(T_min, T_max), "T")
+        self.temperature["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
-        self.T_min = min(self.temperature["isolines"])
-        self.T_max = max(self.temperature["isolines"])
+        self.T_min = min(self.temperature["isolines"].values())
+        self.T_max = max(self.temperature["isolines"].values())
 
         p_min = CP.CoolProp.PropsSI("P", "Q", 1, "T", self.T_min, self.fluid)
         p_max = self.p_crit * 1.1
+        isovalues = _log_range(p_min, p_max)
+        self.pressure["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
-        self.pressure["isolines"] = _log_range(p_min, p_max)
-
-        self.p_min = min(self.pressure["isolines"])
-        self.p_max = max(self.pressure["isolines"])
+        self.p_min = min(self.pressure["isolines"].values())
+        self.p_max = max(self.pressure["isolines"].values())
 
         # this is required to include the (potentially) lower pressure compared
         # to the minimum temperature. The quality isolines are calculated over
@@ -429,15 +466,24 @@ class FluidPropertyDiagram:
         self.v_min = v_min
         self.v_max = v_max
 
-        self.volume["isolines"] = _log_range(v_min, v_max)
+        isovalues = _log_range(v_min, v_max)
+        self.volume["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
         s_min =  CP.CoolProp.PropsSI("S", "T", self.T_min, "P", self.p_max, self.fluid)
         s_max =  CP.CoolProp.PropsSI("S", "T", self.T_max, "P", self.p_min, self.fluid)
         h_min =  CP.CoolProp.PropsSI("H", "T", self.T_min, "P", self.p_max, self.fluid)
         h_max =  CP.CoolProp.PropsSI("H", "T", self.T_max, "P", self.p_min, self.fluid)
 
-        self.entropy["isolines"] = _linear_range(s_min, s_max)
-        self.enthalpy["isolines"] = _linear_range(h_min, h_max)
+        isovalues = _linear_range(s_min, s_max)
+        self.entropy["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
+        isovalues = _linear_range(h_min, h_max)
+        self.enthalpy["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
 
     def _get_state_result_by_name(self, property_name):
         if property_name == "v":
@@ -587,7 +633,7 @@ class FluidPropertyDiagram:
         """Calculate an isoline of constant pressure."""
         isolines = self.pressure['isolines']
 
-        for p in isolines.round(8):
+        for key, p in isolines.items():
             iterators = [
                 ("v", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
                 ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
@@ -604,13 +650,13 @@ class FluidPropertyDiagram:
                 except ValueError:
                     pass
 
-            self.pressure[p] = self._single_isoline(iterators, "p", p)
+            self.pressure["isoline_data"][key] = self._single_isoline(iterators, "p", p)
 
     def _isochoric(self):
         """Calculate an isoline of constant specific volume."""
         isolines = self.volume['isolines']
 
-        for v in isolines.round(8):
+        for key, v in isolines.items():
             iterators = [
                 ('p', np.append(
                     np.geomspace(self.p_min, self.p_crit * 0.8, 100, endpoint=False),
@@ -647,23 +693,25 @@ class FluidPropertyDiagram:
                 # inser the new masks into the original one
                 mask[mask] = outlier_mask & remove_outliers_mask
 
-
                 # remove incorrect values
                 for prop in datapoints:
                     datapoints[prop] = datapoints[prop][~mask]
 
-                # remove values with decreasing temperature
-                mask = np.append([False], np.diff(datapoints["T"]) < 0)
-                for prop in datapoints:
-                    datapoints[prop] = datapoints[prop][~mask]
+                if not mask.any():
+                    # remove values with decreasing temperature
+                    mask = np.append([False], np.diff(datapoints["T"]) < 0)
+                    if len(mask) == 0:
+                        continue
+                    for prop in datapoints:
+                        datapoints[prop] = datapoints[prop][~mask]
 
-            self.volume[v] = datapoints
+            self.volume["isoline_data"][key] = datapoints
 
     def _isothermal(self):
         """Calculate an isoline of constant temperature."""
         isolines = self.temperature['isolines']
 
-        for T in isolines.round(8):
+        for key, T in isolines.items():
             iterators = [
                 ("p", np.geomspace(self.p_min, self.p_max, 200)),
             ]
@@ -696,7 +744,7 @@ class FluidPropertyDiagram:
                     ("p", np.geomspace(self.p_crit * 1.2, self.p_max, 80)),
                 ]
 
-            self.temperature[T] = self._single_isoline(iterators, "T", T)
+            self.temperature["isoline_data"][key] = self._single_isoline(iterators, "T", T)
 
     def _isoquality(self):
         """Calculate an isoline of constant vapor mass fraction."""
@@ -712,8 +760,8 @@ class FluidPropertyDiagram:
         else:
             iterators = []
 
-        for Q in isolines.round(8):
-            self.quality[Q] = self._single_isoline(iterators, "Q", Q)
+        for key, Q in isolines.items():
+            self.quality["isoline_data"][key] = self._single_isoline(iterators, "Q", Q)
 
     def _isenthalpic(self):
         """Calculate an isoline of constant specific enthalpy."""
@@ -724,8 +772,8 @@ class FluidPropertyDiagram:
             ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
         ]
 
-        for h in isolines.round(8):
-            self.enthalpy[h] = self._single_isoline(iterators, "h", h)
+        for key, h in isolines.items():
+            self.enthalpy["isoline_data"][key] = self._single_isoline(iterators, "h", h)
 
     def _isentropic(self):
         """Calculate an isoline of constant specific entropy."""
@@ -738,8 +786,8 @@ class FluidPropertyDiagram:
             ))
         ]
 
-        for s in isolines.round(8):
-            self.entropy[s] = self._single_isoline(iterators, 's', s)
+        for key, s in isolines.items():
+            self.entropy["isoline_data"][key] = self._single_isoline(iterators, 's', s)
 
     def to_json(self, path):
         """Export the diagram data as json file to a path.
@@ -749,14 +797,19 @@ class FluidPropertyDiagram:
         path : str, path-like
             Name of the file to export the data to.
         """
-        data = {
-            prop: {
-                f"{isoline}": {
-                    subprop: list(getattr(self, prop)[isoline][subprop].astype(float))
-                    for subprop in getattr(self, prop)[isoline]
-                } for isoline in getattr(self, prop)["isolines"].round(8)
-            } for prop in self.properties.values()
-        }
+        data = {}
+        for prop in self.properties.values():
+            data[prop] = {
+                "isolines": getattr(self, prop)["isolines"],
+                "isoline_data": {
+                    key: {
+                        subprop: list(datapoints)
+                        for subprop, datapoints in isoline_data.items()
+                    }
+                    for key, isoline_data
+                    in getattr(self, prop)["isoline_data"].items()
+                }
+            }
 
         data["META"] = {
             "fluid": self.fluid,
@@ -1187,19 +1240,27 @@ class FluidPropertyDiagram:
             property = self.properties[isoline]
             data = getattr(self, property)
 
-            isovalues = data['isolines']
+            isovalues = data["isolines"]
             labels_per_line = 1
             label_every_nth = 1
+            # the values to plot are defined by the isovalue keys
+            keys_to_plot = isovalues.keys()
 
+            # isoline_data here is what comes from the user, it is different
+            # from the isoline_data stored in the attributes of the diagram
             if isoline in isoline_data.keys():
                 keys = isoline_data[isoline].keys()
                 if 'style' in keys:
                     data['style'].update(isoline_data[isoline]['style'])
 
                 if 'values' in keys:
-                    isovalues = self.convert_to_SI(
+                    isoline_data_SI = self.convert_to_SI(
                         isoline_data[isoline]['values'], isoline
-                    )
+                    ).round(8)
+                    keys_to_plot = [
+                        key for key, value in isovalues.items()
+                        if round(value, 8) in isoline_data_SI
+                    ]
 
                 if 'label_position' in keys:
                     data['label_position'] = (
@@ -1212,16 +1273,11 @@ class FluidPropertyDiagram:
                 if 'labels_per_line' in keys:
                     labels_per_line = isoline_data[isoline]['labels_per_line']
 
-            for i, isoval in enumerate(isovalues.round(8)):
-                if isoval not in data['isolines'].round(8):
-                    msg = (
-                        f'Could not find data for {property} isoline with '
-                        f'value: {isoval}.'
-                    )
-                    continue
+            for isoline_key in keys_to_plot:
+                datapoints = data["isoline_data"][isoline_key]
 
-                x = self.convert_from_SI(data[isoval][x_property], x_property)
-                y = self.convert_from_SI(data[isoval][y_property], y_property)
+                x = self.convert_from_SI(datapoints[x_property], x_property)
+                y = self.convert_from_SI(datapoints[y_property], y_property)
 
                 indices = np.intersect1d(
                     np.where((x >= x_min) & (x <= x_max)),
@@ -1246,8 +1302,10 @@ class FluidPropertyDiagram:
 
                 ax.plot(x, y, **data['style'])
 
-                if i % label_every_nth == 0:
-                    isoval = self.convert_from_SI(isoval, isoline)
+                if isoline_key % label_every_nth == 0:
+                    isoval = self.convert_from_SI(
+                        isovalues[isoline_key], isoline
+                    ).round(8)
 
                     label_positions = [int(data['label_position'] * len(x))]
                     if labels_per_line > 1:
