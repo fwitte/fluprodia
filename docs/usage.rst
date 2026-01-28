@@ -457,10 +457,9 @@ and a Ts diagram.
     :align: center
     :figclass: only-dark
 
-The script to generate the results is the following code snippet. Just add it
-into your plotting code, and it will create the results shown. An interface
-automatically generating a dictionary for every component of the network is
-planned in future versions of TESPy.
+You can use the :code:`get_plotting_data` data method from the
+:code:`tespy.tools` module to automatically extract all data for the specified
+part of the model.
 
 .. code-block:: python
 
@@ -473,8 +472,15 @@ planned in future versions of TESPy.
 
 
     >>> def run_simple_heat_pump_model():
-    ...     nw = Network(T_unit='C', p_unit='bar', h_unit='kJ / kg')
-    ...     nw.set_attr(iterinfo=False)
+    ...     nw = Network(iterinfo=False)
+    ...     nw.units.set_defaults(
+    ...         temperature="°C",
+    ...         pressure="bar",
+    ...         enthalpy="kJ/kg",
+    ...         heat="kW",
+    ...         power="kW"
+    ...     )
+    ...
     ...     cp = Compressor('compressor')
     ...     cc = CycleCloser('cycle_closer')
     ...     cd = SimpleHeatExchanger('condenser')
@@ -489,13 +495,13 @@ planned in future versions of TESPy.
     ...
     ...     nw.add_conns(cc_cd, cd_va, va_ev, ev_cp, cp_cc)
     ...
-    ...     cd.set_attr(pr=0.95, Q=-1e6)
+    ...     cd.set_attr(pr=0.95, Q=-1e3)
     ...     ev.set_attr(pr=0.9)
-    ...     cp.set_attr(eta_s=0.9)
+    ...     cp.set_attr(eta_s=0.85)
     ...
     ...     cc_cd.set_attr(fluid={'R290': 1})
-    ...     cd_va.set_attr(Td_bp=-5, T=60)
-    ...     ev_cp.set_attr(Td_bp=5, T=15)
+    ...     cd_va.set_attr(td_bubble=5, T=60)
+    ...     ev_cp.set_attr(td_dew=5, T=15)
     ...     nw.solve('design')
     ...     return nw
 
