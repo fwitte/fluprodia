@@ -426,9 +426,24 @@ class FluidPropertyDiagram:
             i: value for i, value in enumerate(isovalues)
         }
 
+    def clear_isolines(self):
+        self.temperature["isolines"] = {}
+        self.pressure["isolines"] = {}
+        self.volume["isolines"] = {}
+        self.entropy["isolines"] = {}
+        self.enthalpy["isolines"] = {}
+        self.quality["isolines"] = {}
+
+        self.temperature["isoline_data"] = {}
+        self.pressure["isoline_data"] = {}
+        self.volume["isoline_data"] = {}
+        self.entropy["isoline_data"] = {}
+        self.enthalpy["isoline_data"] = {}
+        self.quality["isoline_data"] = {}
 
     def set_isolines_subcritical(self, T_min, T_max):
 
+        self.clear_isolines()
         T_crit = self.convert_from_SI(self.T_crit, "T")
 
         if T_min > T_crit:
@@ -482,6 +497,11 @@ class FluidPropertyDiagram:
         }
         isovalues = _linear_range(h_min, h_max)
         self.enthalpy["isolines"] = {
+            i: value for i, value in enumerate(isovalues)
+        }
+
+        isovalues = np.linspace(0, 1, 11)
+        self.quality["isolines"] = {
             i: value for i, value in enumerate(isovalues)
         }
 
@@ -721,16 +741,16 @@ class FluidPropertyDiagram:
                 p_sat = self.state.p()
                 if self.p_min < p_sat * 0.999:
                     iterators = [
-                        ("p", np.geomspace(self.p_min, p_sat * 0.999, 120)),
+                        ("p", np.geomspace(self.p_min, p_sat * 0.999, 100)),
                         # start in gas and end in liquid
-                        ("Q", np.linspace(1, 0, 11)),
+                        ("Q", np.linspace(1, 0, 31)),
                         ("p", np.geomspace(p_sat * 1.001, self.p_max, 69))
                     ]
                 elif self.p_min < p_sat * 1.01:
                     iterators = [
                         # start in gas and end in liquid
-                        ("Q", np.linspace(1, 0, 11)),
-                        ("p", np.geomspace(p_sat * 1.001, self.p_max, 189))
+                        ("Q", np.linspace(1, 0, 31)),
+                        ("p", np.geomspace(p_sat * 1.001, self.p_max, 169))
                     ]
 
             elif T <= self.T_crit * 1.2 and T >= self.T_trip:
