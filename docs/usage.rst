@@ -277,6 +277,40 @@ of each isoline within the limits of the view.
     If you have ideas, how to place the labels in an improved way, we are
     looking forward for you suggestions.
 
+Changing the line labels and LaTeX-style units
+**********************************************
+It is possible to add more than a single label to each isoline with key
+:code:`labels_per_lin`, or to only add a label to each n-th isoline with key
+:code:`label_every_nth`. We can also disable the LaTeX style unit display with
+:code:`latex_units=False`.
+
+..code-block:: python
+
+    >>> diagram.set_isolines_subcritical(-75, 125)  # also resets old isolines
+    >>> diagram.calc_isolines()
+    >>> fig, ax = plt.subplots(1, figsize=(16, 10))
+    >>> mydata = {
+    ...     'T': {
+    ...         'style': {'color': '#ff0000'},
+    ...         'label_every_nth': 2,  # every second line
+    ...         'labels_per_line': 3  # 3 labels for every line
+    ...     }
+    ... }
+    >>> diagram.draw_isolines(
+    ...     fig, ax, 'logph', isoline_data=mydata,
+    ...     x_min=0, x_max=750, y_min=1, y_max=5e1, latex_units=False
+    ... )
+    >>> plt.tight_layout()
+    >>> fig.savefig('logph_R290_labeling.svg')
+
+.. figure:: /reference/_images/logph_R290_labeling.svg
+    :align: center
+    :figclass: only-light
+
+.. figure:: /reference/_images/logph_R290_labeling_darkmode.svg
+    :align: center
+    :figclass: only-dark
+
 Plotting individual isolines (and isolike lines)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -347,10 +381,12 @@ property of your diagram, e.g. to the :code:`plot()` method.
 .. code-block:: python
 
     >>> fig, ax = plt.subplots(1, figsize=(16, 10))
-    >>> mydata = {
-    ...     'Q': {'values': np.linspace(0, 1, 11)},
-    ...     'T': {'values': np.arange(-75, 150, 25)}
-    ... }
+    >>> diagram.clear_isolines()  # we remove the old ones and make them new
+    >>> diagram._setup_isoline_defaults()
+    >>> iso_T = np.arange(-75, 151, 25)
+    >>> diagram.set_isolines(T=iso_T)
+    >>> diagram.calc_isolines()
+
     >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=0, x_max=1000, y_min=1e-1, y_max=1.5e2)
     >>> for key, specs in data.items():
     ...     datapoints = specs['datapoints']
