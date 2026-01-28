@@ -1225,8 +1225,15 @@ class FluidPropertyDiagram:
         ax.set_xscale(x_scale)
         ax.set_yscale(y_scale)
 
-        x_label = f'{x_property} in {_beautiful_unit_string(self.units[x_property])}'
-        y_label = f'{y_property} in {_beautiful_unit_string(self.units[y_property])}'
+        if latex_units:
+            x_unit = _beautiful_unit_string(self.units[x_property])
+            y_unit = _beautiful_unit_string(self.units[y_property])
+        else:
+            x_unit = self.units[x_property]
+            y_unit = self.units[y_property]
+
+        x_label = f'{x_property} in {x_unit}'
+        y_label = f'{y_property} in {y_unit}'
 
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
@@ -1273,7 +1280,7 @@ class FluidPropertyDiagram:
                 if 'labels_per_line' in keys:
                     labels_per_line = isoline_data[isoline]['labels_per_line']
 
-            for isoline_key in keys_to_plot:
+            for i, isoline_key in enumerate(keys_to_plot):
                 datapoints = data["isoline_data"][isoline_key]
 
                 x = self.convert_from_SI(datapoints[x_property], x_property)
@@ -1302,7 +1309,7 @@ class FluidPropertyDiagram:
 
                 ax.plot(x, y, **data['style'])
 
-                if isoline_key % label_every_nth == 0:
+                if i % label_every_nth == 0:
                     isoval = self.convert_from_SI(
                         isovalues[isoline_key], isoline
                     ).round(8)
