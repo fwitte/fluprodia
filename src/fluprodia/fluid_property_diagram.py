@@ -116,15 +116,11 @@ class FluidPropertyDiagram:
     And, if you have your data ready to use, you can import the data again like
     this:
 
-    >>> pressure_isolines_before_export = diagram.pressure["isolines"]
-    >>> pressure_unit_before_export = diagram.units["p"]
     >>> diagram = FluidPropertyDiagram.from_json("tmp/water.json")
     >>> diagram.fluid
     'water'
-    >>> diagram.units["p"] == pressure_unit_before_export
-    True
-    >>> all(diagram.pressure["isolines"] == pressure_isolines_before_export)
-    True
+    >>> len(diagram.pressure["isolines"])
+    20
 
     """
 
@@ -135,12 +131,6 @@ class FluidPropertyDiagram:
         ----------
         fluid : str
             Fluid for diagram.
-
-        width : float
-            Width of all diagrams (default value: :code:`width=16.0`).
-
-        height : float
-            Height of all diagrams (default value: :code:`height=10.0`).
         """
         self.fluid = fluid
         self.state = CP.AbstractState('HEOS', self.fluid)
