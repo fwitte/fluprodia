@@ -259,7 +259,7 @@ def _beautiful_unit_string(unit):
     if '/' in unit:
         numerator = unit.split('/')[0]
         denominator = unit.split('/')[1]
-        unit = '$\\frac{' + numerator + '}{' + denominator + '}$'
+        unit = '$\\frac{\\text{' + numerator + '}}{\\text{' + denominator + '}}$'
 
     return unit
 
