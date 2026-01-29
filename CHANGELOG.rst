@@ -7,6 +7,8 @@ v4.0 (under development)
 * Change the datastructures in the back-end to better organize the isoline data
   storage.
 * Update example usages to the latest TESPy API
+* The CoolProp back-end can be passed to the diagram, allowing you to specify
+  REFPROP.
 
 v3.5.1 (January, 22, 2025)
 --------------------------

@@ -132,6 +132,12 @@ simply change the name. Isolines come with defaults as well.
     :align: center
     :figclass: only-dark
 
+You can change the back-end of CoolProp, e.g. to use REFPROP:
+
+.. code-block:: python
+
+    diagram = FluidPropertyDiagram(fluid='R290', backend='REFPROP')
+
 Documentation
 =============
 
