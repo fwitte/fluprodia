@@ -88,6 +88,12 @@ All available diagram types can be displayed by printing the following line.
     >>> list(diagram.supported_diagrams.keys())
     ['Ts', 'hs', 'logph', 'Th', 'plogv']
 
+You can also change the back-end of CoolProp, e.g. to use REFPROP:
+
+.. code-block:: python
+
+    diagram = FluidPropertyDiagram(fluid='R290', backend='REFPROP')
+
 Customizing the Display
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -284,7 +290,7 @@ It is possible to add more than a single label to each isoline with key
 :code:`label_every_nth`. We can also disable the LaTeX style unit display with
 :code:`latex_units=False`.
 
-..code-block:: python
+.. code-block:: python
 
     >>> diagram.set_isolines_subcritical(-75, 125)  # also resets old isolines
     >>> diagram.calc_isolines()

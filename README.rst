@@ -117,6 +117,12 @@ simply change the name. Isolines come with defaults as well.
 .. figure:: https://raw.githubusercontent.com/fwitte/fluprodia/master/docs/reference/_images/logph_diagram_R290.svg
     :align: center
 
+You can change the back-end of CoolProp, e.g. to use REFPROP:
+
+.. code-block:: python
+
+    diagram = FluidPropertyDiagram(fluid='R290', backend='REFPROP')
+
 Documentation
 =============
 
