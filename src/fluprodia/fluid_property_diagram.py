@@ -121,19 +121,27 @@ class FluidPropertyDiagram:
     'water'
     >>> len(diagram.pressure["isolines"])
     20
-
     """
 
-    def __init__(self, fluid):
+    def __init__(self, fluid, backend=None):
         u"""Create a FluidPropertyDiagram object.
 
         Parameters
         ----------
         fluid : str
             Fluid for diagram.
+
+        backend : str
+            CoolProp backend to use, e.g. HEOS or REFPROP, by default HEOS.
         """
+        if backend is None:
+            backend = "HEOS"
+
+        self.backend = backend
         self.fluid = fluid
-        self.state = CP.AbstractState('HEOS', self.fluid)
+        self.fluid_string = f"{self.backend}::{self.fluid}"
+
+        self.state = CP.AbstractState(backend, self.fluid)
 
         self.converters = {}
         self.converters['p'] = {
@@ -212,7 +220,7 @@ class FluidPropertyDiagram:
 
         metadata = data["META"].copy()
         del data["META"]
-        instance = cls(metadata["fluid"])
+        instance = cls(metadata["fluid"], metadata.get("backend"))
         instance.set_unit_system(**metadata["units"])
         for key, value in data.items():
             isoprop = getattr(instance, key)
@@ -461,7 +469,7 @@ class FluidPropertyDiagram:
         self.T_min = min(self.temperature["isolines"].values())
         self.T_max = max(self.temperature["isolines"].values())
 
-        p_min = CP.CoolProp.PropsSI("P", "Q", 1, "T", self.T_min, self.fluid)
+        p_min = CP.CoolProp.PropsSI("P", "Q", 1, "T", self.T_min, self.fluid_string)
         p_max = self.p_crit * 1.1
         isovalues = _log_range(p_min, p_max)
         self.pressure["isolines"] = {
@@ -474,10 +482,10 @@ class FluidPropertyDiagram:
         # this is required to include the (potentially) lower pressure compared
         # to the minimum temperature. The quality isolines are calculated over
         # temperature
-        self.T_min = CP.CoolProp.PropsSI("T", "P", self.p_min, "Q", 1, self.fluid)
+        self.T_min = CP.CoolProp.PropsSI("T", "P", self.p_min, "Q", 1, self.fluid_string)
 
-        v_min = 1 / CP.CoolProp.PropsSI("D", "T", self.T_min, "P", self.p_max, self.fluid)
-        v_max = 1 / CP.CoolProp.PropsSI("D", "T", self.T_max, "P", self.p_min, self.fluid)
+        v_min = 1 / CP.CoolProp.PropsSI("D", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        v_max = 1 / CP.CoolProp.PropsSI("D", "T", self.T_max, "P", self.p_min, self.fluid_string)
         self.v_min = v_min
         self.v_max = v_max
 
@@ -486,10 +494,10 @@ class FluidPropertyDiagram:
             i: value for i, value in enumerate(isovalues)
         }
 
-        s_min =  CP.CoolProp.PropsSI("S", "T", self.T_min, "P", self.p_max, self.fluid)
-        s_max =  CP.CoolProp.PropsSI("S", "T", self.T_max, "P", self.p_min, self.fluid)
-        h_min =  CP.CoolProp.PropsSI("H", "T", self.T_min, "P", self.p_max, self.fluid)
-        h_max =  CP.CoolProp.PropsSI("H", "T", self.T_max, "P", self.p_min, self.fluid)
+        s_min =  CP.CoolProp.PropsSI("S", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        s_max =  CP.CoolProp.PropsSI("S", "T", self.T_max, "P", self.p_min, self.fluid_string)
+        h_min =  CP.CoolProp.PropsSI("H", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        h_max =  CP.CoolProp.PropsSI("H", "T", self.T_max, "P", self.p_min, self.fluid_string)
 
         isovalues = _linear_range(s_min, s_max)
         self.entropy["isolines"] = {
@@ -660,7 +668,7 @@ class FluidPropertyDiagram:
             ]
             if p <= self.p_crit:
                 try:
-                    T_sat = CP.CoolProp.PropsSI("T", "P", p, "Q", 0, self.fluid)
+                    T_sat = CP.CoolProp.PropsSI("T", "P", p, "Q", 0, self.fluid_string)
                     iterators = [
                         ("T", np.geomspace(self.T_min, T_sat * 0.999, 120)),
                         # start in liquid and end in gas
@@ -685,9 +693,9 @@ class FluidPropertyDiagram:
             ]
             try:
                 if v > self.v_crit:
-                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 1, self.fluid)
+                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 1, self.fluid_string)
                 else:
-                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 0, self.fluid)
+                    p_sat = CP.CoolProp.PropsSI("P", "D", 1 / v, "Q", 0, self.fluid_string)
 
                 iterators = [
                     ('p', np.append(
@@ -833,6 +841,7 @@ class FluidPropertyDiagram:
 
         data["META"] = {
             "fluid": self.fluid,
+            "backend": self.backend,
             "units": self.units,
             "CoolProp-version": CP.__version__,
             "fluprodia-version": __version__
@@ -976,7 +985,7 @@ class FluidPropertyDiagram:
                     starting_point_value,
                     isoline_property.upper(),
                     isoline_value,
-                    self.fluid
+                    self.fluid_string
                 )
                 # self._update_state({
                 #     starting_point_property: starting_point_value,
@@ -993,7 +1002,7 @@ class FluidPropertyDiagram:
                     ending_point_value,
                     isoline_property.upper(),
                     isoline_value_end,
-                    self.fluid
+                    self.fluid_string
                 )
                 # this produces a different result, no idea why
                 # self._update_state({
