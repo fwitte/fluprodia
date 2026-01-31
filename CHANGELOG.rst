@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v4.0 (under development)
+v4.0 (January, 31, 2026)
 ------------------------
 * Change the datastructures in the back-end to better organize the isoline data
   storage.
