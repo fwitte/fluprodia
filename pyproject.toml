@@ -61,6 +61,7 @@ dev = [
     "sphinx-design",
     "tespy",
     "tox",
+    "twine"
 ]
 
 [tool.pytest.ini_options]
