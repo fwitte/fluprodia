@@ -2,7 +2,8 @@
 import numpy as np
 import pytest
 
-from fluprodia._units import SI_UNITS, Units
+from fluprodia._units import SI_UNITS
+from fluprodia._units import Units
 
 
 class TestDefaults:

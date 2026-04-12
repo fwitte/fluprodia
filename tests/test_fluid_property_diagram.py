@@ -7,7 +7,6 @@ import pytest
 from fluprodia import FluidPropertyDiagram
 from fluprodia._units import Units
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -57,6 +57,7 @@ dev = [
     "flit",
     "furo",
     "ipykernel",
+    "isort",
     "matplotlib",
     "nbformat",
     "plotly>=6.7.0",

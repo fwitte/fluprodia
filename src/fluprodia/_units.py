@@ -15,7 +15,6 @@ import warnings
 import pint
 import platformdirs
 
-
 # Map legacy/non-standard unit strings used in fluprodia to pint-parseable
 # equivalents.  Strings already understood by pint (e.g. "Pa", "bar",
 # "J/kgK" after defining kgK) are NOT listed here - they pass through as-is.
