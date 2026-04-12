@@ -24,6 +24,26 @@ from ._utils import _isolines_log
 from ._utils import _linear_range
 from ._utils import _log_range
 
+# Mapping from matplotlib linestyle strings to plotly dash strings
+_MPL_DASH_MAP = {
+    '-': 'solid', 'solid': 'solid',
+    '--': 'dash', 'dashed': 'dash',
+    '-.': 'dashdot', 'dashdot': 'dashdot',
+    ':': 'dot', 'dotted': 'dot',
+}
+
+
+def _mpl_style_to_plotly_line(style):
+    """Convert a matplotlib line style dict to a plotly line dict."""
+    line = {}
+    if 'color' in style:
+        line['color'] = style['color']
+    if 'linewidth' in style:
+        line['width'] = style['linewidth']
+    if 'linestyle' in style:
+        line['dash'] = _MPL_DASH_MAP.get(style['linestyle'], 'solid')
+    return line
+
 
 class FluidPropertyDiagram:
     u"""Short summary.
@@ -1282,57 +1302,76 @@ class FluidPropertyDiagram:
             x_unit = self.units[x_property]
             y_unit = self.units[y_property]
 
-        x_label = f'{x_property} in {x_unit}'
-        y_label = f'{y_property} in {y_unit}'
+        ax.set_xlabel(f'{x_property} in {x_unit}')
+        ax.set_ylabel(f'{y_property} in {y_unit}')
 
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
+        for trace in self._iter_isoline_traces(
+            diagram_type, x_min, x_max, y_min, y_max, isoline_data
+        ):
+            ax.plot(trace['x'], trace['y'], **trace['style'])
 
-        isolines = [
-            x for x in self.properties.keys()
-            if x not in [x_property, y_property]
-        ]
-        for isoline in isolines:
-
-            property = self.properties[isoline]
-            data = getattr(self, property)
-
-            isovalues = data["isolines"]
-            labels_per_line = 1
-            label_every_nth = 1
-            # the values to plot are defined by the isovalue keys
-            keys_to_plot = isovalues.keys()
-
-            # isoline_data here is what comes from the user, it is different
-            # from the isoline_data stored in the attributes of the diagram
-            if isoline in isoline_data.keys():
-                keys = isoline_data[isoline].keys()
-                if 'style' in keys:
-                    data['style'].update(isoline_data[isoline]['style'])
-
-                if 'values' in keys:
-                    isoline_data_SI = self.convert_to_SI(
-                        isoline_data[isoline]['values'], isoline
-                    ).round(8)
-                    keys_to_plot = [
-                        key for key, value in isovalues.items()
-                        if round(value, 8) in isoline_data_SI
-                    ]
-
-                if 'label_position' in keys:
-                    data['label_position'] = (
-                        isoline_data[isoline]['label_position']
+            if trace['trace_index'] % trace['label_every_nth'] == 0:
+                label_positions = [int(trace['label_position'] * len(trace['x']))]
+                if trace['labels_per_line'] > 1:
+                    label_positions = (
+                        np.linspace(0.05, 0.95, trace['labels_per_line'])
+                        * len(trace['x'])
+                    )
+                for lp in label_positions:
+                    self._draw_isoline_label(
+                        fig, ax,
+                        trace['isoval'], trace['isoline'],
+                        int(lp),
+                        trace['x'], trace['y'],
+                        x_min, x_max, y_min, y_max, latex_units
                     )
 
-                if 'label_every_nth' in keys:
-                    label_every_nth = isoline_data[isoline]['label_every_nth']
+    def _iter_isoline_traces(self, diagram_type, x_min, x_max, y_min, y_max, isoline_data):
+        """Yield one dict per visible isoline trace.
 
-                if 'labels_per_line' in keys:
-                    labels_per_line = isoline_data[isoline]['labels_per_line']
+        Shared by :meth:`draw_isolines` and :meth:`draw_isolines_plotly`.
+        Each dict contains:
 
-            for i, isoline_key in enumerate(keys_to_plot):
-                datapoints = data["isoline_data"][isoline_key]
+        * ``isoline`` – short property key (e.g. ``'p'``, ``'T'``)
+        * ``trace_index`` – position within this isoline type (for labelling)
+        * ``x``, ``y`` – data arrays clipped to the plot range
+        * ``style`` – merged style dict (copy; never mutates stored state)
+        * ``isoval`` – isoline value in user units
+        * ``label_position``, ``labels_per_line``, ``label_every_nth``
+        """
+        x_property = self.supported_diagrams[diagram_type]['x_property']
+        y_property = self.supported_diagrams[diagram_type]['y_property']
 
+        for isoline in [k for k in self.properties if k not in (x_property, y_property)]:
+            prop_data = getattr(self, self.properties[isoline])
+            isovalues = prop_data["isolines"]
+
+            # Resolve per-call overrides without mutating stored state
+            style = dict(prop_data['style'])
+            label_position = prop_data['label_position']
+            label_every_nth = 1
+            labels_per_line = 1
+            keys_to_plot = list(isovalues.keys())
+
+            if isoline in isoline_data:
+                override = isoline_data[isoline]
+                if 'style' in override:
+                    style.update(override['style'])
+                if 'values' in override:
+                    si_values = self.convert_to_SI(override['values'], isoline).round(8)
+                    keys_to_plot = [
+                        k for k, v in isovalues.items()
+                        if round(v, 8) in si_values
+                    ]
+                if 'label_position' in override:
+                    label_position = override['label_position']
+                if 'label_every_nth' in override:
+                    label_every_nth = override['label_every_nth']
+                if 'labels_per_line' in override:
+                    labels_per_line = override['labels_per_line']
+
+            for trace_index, isoline_key in enumerate(keys_to_plot):
+                datapoints = prop_data["isoline_data"][isoline_key]
                 x = self.convert_from_SI(datapoints[x_property], x_property)
                 y = self.convert_from_SI(datapoints[y_property], y_property)
 
@@ -1347,34 +1386,112 @@ class FluidPropertyDiagram:
                 if len(gap) > 0:
                     indices = np.insert(indices, gap + 1, indices[gap] + 1)
                     indices = np.insert(indices, gap + 2, indices[gap + 2] - 1)
-
                 if indices[0] != 0:
                     indices = np.insert(indices, 0, indices[0] - 1)
                 if indices[-1] < len(x) - 1:
                     indices = np.append(indices, indices[-1] + 1)
 
-                y = y[indices]
-                x = x[indices]
+                isoval = round(
+                    self.convert_from_SI(isovalues[isoline_key], isoline), 8
+                )
 
-                ax.plot(x, y, **data['style'])
+                yield {
+                    'isoline': isoline,
+                    'trace_index': trace_index,
+                    'x': x[indices],
+                    'y': y[indices],
+                    'style': style,
+                    'isoval': isoval,
+                    'label_position': label_position,
+                    'label_every_nth': label_every_nth,
+                    'labels_per_line': labels_per_line,
+                }
 
-                if i % label_every_nth == 0:
-                    isoval = self.convert_from_SI(
-                        isovalues[isoline_key], isoline
-                    ).round(8)
+    def draw_isolines_plotly(
+        self, diagram_type, x_min, x_max, y_min, y_max,
+        isoline_data=None
+    ):
+        """Draw isolines and return a :class:`plotly.graph_objects.Figure`.
 
-                    label_positions = [int(data['label_position'] * len(x))]
-                    if labels_per_line > 1:
-                        label_positions = np.linspace(
-                            0.05, 0.95, labels_per_line
-                        ) * len(x)
-                    for label_position in label_positions:
-                        self._draw_isoline_label(
-                            fig, ax,
-                            isoval.round(8), isoline,
-                            int(label_position),
-                            x, y, x_min, x_max, y_min, y_max, latex_units
-                        )
+        The interface mirrors :meth:`draw_isolines`.  Isoline styles are
+        specified with the same matplotlib-style keys (``color``,
+        ``linewidth``, ``linestyle``) and are mapped to plotly equivalents
+        internally.
+
+        Parameters
+        ----------
+        diagram_type : str
+            Name of the diagram, same choices as for :meth:`draw_isolines`.
+
+        x_min : number
+            Minimum for x range.
+
+        x_max : number
+            Maximum for x range.
+
+        y_min : number
+            Minimum for y range.
+
+        y_max : number
+            Maximum for y range.
+
+        isoline_data : dict, optional
+            Same structure as for :meth:`draw_isolines`.  The ``style``
+            sub-dict accepts ``color``, ``linewidth`` and ``linestyle``
+            (matplotlib keys; mapped to plotly ``line.color``, ``line.width``
+            and ``line.dash`` respectively).
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            Fully configured figure; add further traces to overlay custom
+            data (e.g. state points from a cycle simulation).
+        """
+        try:
+            import plotly.graph_objects as go
+        except ImportError as e:
+            raise ImportError(
+                "Install plotly to use draw_isolines_plotly."
+            ) from e
+
+        if isoline_data is None:
+            isoline_data = {}
+
+        self._check_diagram_types(diagram_type)
+
+        x_scale = self.supported_diagrams[diagram_type]['x_scale']
+        y_scale = self.supported_diagrams[diagram_type]['y_scale']
+        x_property = self.supported_diagrams[diagram_type]['x_property']
+        y_property = self.supported_diagrams[diagram_type]['y_property']
+
+        x_label = f'{x_property} in {self.units[x_property]}'
+        y_label = f'{y_property} in {self.units[y_property]}'
+
+        x_range = [np.log10(x_min), np.log10(x_max)] if x_scale == 'log' else [x_min, x_max]
+        y_range = [np.log10(y_min), np.log10(y_max)] if y_scale == 'log' else [y_min, y_max]
+
+        fig = go.Figure()
+        fig.update_layout(
+            xaxis=dict(type=x_scale, range=x_range, title=x_label),
+            yaxis=dict(type=y_scale, range=y_range, title=y_label)
+        )
+
+        legend_shown = set()
+        for trace in self._iter_isoline_traces(
+            diagram_type, x_min, x_max, y_min, y_max, isoline_data
+        ):
+            isoline = trace['isoline']
+            fig.add_trace(go.Scatter(
+                x=trace['x'], y=trace['y'],
+                mode='lines',
+                line=_mpl_style_to_plotly_line(trace['style']),
+                legendgroup=isoline,
+                name=isoline,
+                showlegend=isoline not in legend_shown,
+            ))
+            legend_shown.add(isoline)
+
+        return fig
 
     def _check_diagram_types(self, diagram_type):
         if not isinstance(diagram_type, str):
