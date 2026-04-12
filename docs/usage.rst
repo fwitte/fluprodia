@@ -565,6 +565,9 @@ part of the model.
     ...         'style': {'color': '#000000'}
     ...     }
     ... }
+    >>> diagram = FluidPropertyDiagram(fluid="R290")
+    >>> diagram.set_unit_system(units=nw.units)
+    >>> diagram.set_isolines_subcritical(T_min=-25, T_max=100)
     >>> diagram.set_isolines(T=mydata["T"]["values"], Q=mydata["Q"]["values"])
     >>> diagram.calc_isolines()
     >>> diagram.draw_isolines(

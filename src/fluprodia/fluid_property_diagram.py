@@ -591,7 +591,12 @@ class FluidPropertyDiagram:
                     f"'units' must be an object with a 'default' dict "
                     f"(e.g. a tespy Units instance), got {type(units).__name__}."
                 )
-            merged = {**units.default, **kwargs}
+            units = {
+                key: value
+                for key, value in units.default.items()
+                if key is not None
+            }
+            merged = {**units, **kwargs}
         else:
             merged = kwargs
         self.units.set_defaults(**merged)
