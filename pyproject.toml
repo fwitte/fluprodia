@@ -82,6 +82,7 @@ addopts = """
 testpaths = [
     "src/",
     "docs/",
+    "tests/",
 ]
 
 [tool.isort]
