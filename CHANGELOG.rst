@@ -2,6 +2,13 @@
 Changelog
 =========
 
+v4.1 (April, 12, 2026)
+----------------------
+* Implement pint compatible units.
+* Make it possible to directly take over units from TESPy.
+* Implement an option to generate a plotly figure.
+* Implement a testing framework apart from the doctests.
+
 v4.0 (January, 31, 2026)
 ------------------------
 * Change the datastructures in the back-end to better organize the isoline data
