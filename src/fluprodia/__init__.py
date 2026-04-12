@@ -4,7 +4,7 @@
 import sys
 import warnings
 
-__version__ = '4.1'
+__version__ = '4.1.1'
 
 if sys.version_info < (3, 11):
     warnings.warn(
