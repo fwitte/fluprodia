@@ -20,7 +20,7 @@ method. The fluid properties available are:
 - pressure :code:`p`
 - specific enthalpy :code:`h`
 - specific entropy :code:`s`
-- specific volume :code:`v`
+- specific volume :code:`vol`
 - temperature :code:`T`
 - vapor mass fraction :code:`Q`
 
