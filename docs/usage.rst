@@ -221,7 +221,7 @@ numpy array.
     ...         'style': {'color': '#ff0000'},
     ...         'values': T
     ...     },
-    ...     'v': {'values': np.array([])}
+    ...     'vol': {'values': np.array([])}
     ... }
     >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=300, x_max=600, y_min=1, y_max=1e2)
     >>> plt.tight_layout()
@@ -263,7 +263,7 @@ of each isoline within the limits of the view.
     ...         'values': T,
     ...         'label_position': 0.8
     ...     },
-    ...     'v': {'values': np.array([])}
+    ...     'vol': {'values': np.array([])}
     ... }
     >>> diagram.draw_isolines(fig, ax, 'logph', isoline_data=mydata, x_min=300, x_max=600, y_min=1, y_max=1e2)
     >>> plt.tight_layout()
@@ -342,7 +342,7 @@ diagram's respective unit system.
     ...         'ending_point_value': 150
     ...     },
     ...     'isochoric': {
-    ...         'isoline_property': 'v',
+    ...         'isoline_property': 'vol',
     ...         'isoline_value': 0.035,
     ...         'starting_point_property': 'h',
     ...         'starting_point_value': 250,
@@ -354,7 +354,7 @@ diagram's respective unit system.
     ...         'isoline_value': 50,
     ...         'starting_point_property': 'Q',
     ...         'starting_point_value': 0.1,
-    ...         'ending_point_property': 'v',
+    ...         'ending_point_property': 'vol',
     ...         'ending_point_value': 0.5
     ...     },
     ...     'isenthalpic': {

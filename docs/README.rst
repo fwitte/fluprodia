@@ -71,7 +71,7 @@ calculated and run the calculation:
     >>> v = np.geomspace(0.001, 10, 5)
     >>> s = np.linspace(1000, 10000, 10)
     >>> h = np.linspace(0, 3600, 19)
-    >>> diagram.set_isolines(Q=Q, T=T, p=p, v=v, s=s, h=h)
+    >>> diagram.set_isolines(Q=Q, T=T, p=p, vol=v, s=s, h=h)
     >>> diagram.calc_isolines()
 
 Then you can plot the data to different types of plots, e.g. logph diagram:

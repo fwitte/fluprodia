@@ -11,11 +11,13 @@ SPDX-License-Identifier: MIT
 """
 import json
 import os
+import warnings
 
 import CoolProp as CP
 import numpy as np
 
 from . import __version__
+from ._units import Units
 from ._utils import _beautiful_unit_string
 from ._utils import _hampel_filter
 from ._utils import _isolines_log
@@ -103,7 +105,7 @@ class FluidPropertyDiagram:
     ...         'h': {
     ...            'values': iso_h,
     ...            'style': {'linewidth': 2, 'color': '#ff0000'}
-    ...         }, 'v': {'values': np.array([])}},
+    ...         }, 'vol': {'values': np.array([])}},
     ...     x_min=0, x_max=8, y_min=0, y_max=700
     ... )
     >>> plt.tight_layout()
@@ -143,31 +145,11 @@ class FluidPropertyDiagram:
 
         self.state = CP.AbstractState(backend, self.fluid)
 
-        self.converters = {}
-        self.converters['p'] = {
-            'Pa': 1, 'hPa': 1e2, 'mbar': 1e2, 'psi': 6894.7572931783,
-            'kPa': 1e3, 'bar': 1e5, 'MPa': 1e6
-        }
-        self.converters['T'] = {
-            'K': [0, 1], '°C': [273.15, 1], '°F': [459.67, 5 / 9]
-        }
-        self.converters['s'] = {'J/kgK': 1, 'kJ/kgK': 1e3, 'MJ/kgK': 1e6}
-        self.converters['h'] = {'J/kg': 1, 'kJ/kg': 1e3, 'MJ/kg': 1e6}
-        self.converters['v'] = {'m^3/kg': 1, 'l/kg': 1e-3}
-        self.converters['Q'] = {'-': 1, '%': 0.01}
-
-        self.units = {
-            'p': 'Pa',
-            's': 'J/kgK',
-            'h': 'J/kg',
-            'v': 'm^3/kg',
-            'Q': '-',
-            'T': 'K',
-        }
+        self.units = Units()
 
         self.properties = {
             'p': 'pressure',
-            'v': 'volume',
+            'vol': 'volume',
             'T': 'temperature',
             'h': 'enthalpy',
             's': 'entropy',
@@ -200,7 +182,7 @@ class FluidPropertyDiagram:
                 'y_scale': 'linear'
             },
             'plogv': {
-                'x_property': 'v',
+                'x_property': 'vol',
                 'y_property': 'p',
                 'x_scale': 'log',
                 'y_scale': 'linear'
@@ -221,7 +203,7 @@ class FluidPropertyDiagram:
         metadata = data["META"].copy()
         del data["META"]
         instance = cls(metadata["fluid"], metadata.get("backend"))
-        instance.set_unit_system(**metadata["units"])
+        instance.units = Units.from_json(metadata["units"])
         for key, value in data.items():
             isoprop = getattr(instance, key)
             isoprop["isolines"] = {
@@ -241,7 +223,7 @@ class FluidPropertyDiagram:
         """Setup lookup tables for isoline functions and CoolProp inputs."""
         self.CoolProp_inputs = {
             'p': CP.iP,
-            'v': CP.iDmass,
+            'vol': CP.iDmass,
             'T': CP.iT,
             'h': CP.iHmass,
             's': CP.iSmass,
@@ -249,7 +231,7 @@ class FluidPropertyDiagram:
         }
         self.CoolProp_results = {
             'p': self.state.p,
-            'v': self.state.rhomass,
+            'vol': self.state.rhomass,
             'T': self.state.T,
             'h': self.state.hmass,
             's': self.state.smass,
@@ -345,10 +327,17 @@ class FluidPropertyDiagram:
         h : ndarray
             Isolines for specific enthalpy.
 
-        v : ndarray
+        vol : ndarray
             Isolines for specific volume.
         """
-        keys = ['p', 'T', 'Q', 's', 'h', 'v']
+        keys = ['p', 'T', 'Q', 's', 'h', 'vol']
+        if 'v' in kwargs:
+            warnings.warn(
+                "The key 'v' for specific volume is deprecated and will be "
+                "removed in a future release. Use 'vol' instead.",
+                FutureWarning
+            )
+            kwargs['vol'] = kwargs.pop('v')
         for key in kwargs:
             if key in keys:
                 obj = getattr(self, self.properties[key])
@@ -514,7 +503,7 @@ class FluidPropertyDiagram:
         }
 
     def _get_state_result_by_name(self, property_name):
-        if property_name == "v":
+        if property_name == "vol":
             return 1 / self.CoolProp_results[property_name]()
         else:
             return self.CoolProp_results[property_name]()
@@ -522,8 +511,8 @@ class FluidPropertyDiagram:
     def _update_state(self, input_dict):
         output_dict = {}
         for property_name, value in input_dict.items():
-            if property_name == "v":
-                output_dict["v"] = 1 / value
+            if property_name == "vol":
+                output_dict["vol"] = 1 / value
             else:
                 output_dict[property_name] = value
 
@@ -534,45 +523,58 @@ class FluidPropertyDiagram:
 
         self.state.update(*CP.CoolProp.generate_update_pair(*args))
 
-    def set_unit_system(self, **kwargs):
+    def set_unit_system(self, units=None, **kwargs):
         u"""Set the unit system for the fluid properties.
+
+        Delegates to :meth:`fluprodia._units.Units.set_defaults`.  Any
+        pint-compatible unit string that is dimensionally consistent with the
+        property is accepted.
+
+        Both short-form keys (``p``, ``T``, ``vol``, ``h``, ``s``, ``Q``) and
+        long-form keys (``pressure``, ``temperature``, ``volume``,
+        ``enthalpy``, ``entropy``, ``quality``) are supported.
+
+        A :class:`tespy.tools.units.Units` instance (or any object with a
+        ``default`` attribute that is a plain ``dict``) may be passed as the
+        first positional argument.  Keyword arguments are merged on top and
+        take precedence.  tespy properties that have no fluprodia equivalent
+        (e.g. ``mass_flow``, ``power``) are silently ignored.
 
         Parameters
         ----------
-        p : str
-            Unit of pressure, units available are
-            :code:`Pa, hPa, mbar, psi, kPa, bar, MPa`.
+        units : object, optional
+            An object with a ``default`` dict, e.g. ``network.units`` from a
+            tespy simulation.  Its entries are used as base values; any
+            ``**kwargs`` override them.
 
-        T : str
-            Unit of temperature, units available are
-            :code:`K, °C, °F`.
+        p / pressure : str
+            Unit of pressure, e.g. ``'Pa'``, ``'bar'``, ``'MPa'``.
 
-        s : str
-            Unit of specific entropy, units available are
-            :code:`J/kgK, kJ/kgK, MJ/kgK`.
+        T / temperature : str
+            Unit of temperature, e.g. ``'K'``, ``'°C'``, ``'°F'``.
 
-        h : str
-            Unit of specific enthalpy, units available are
-            :code:`J/kg, kJ/kg, MJ/kg`.
+        s / entropy : str
+            Unit of specific entropy, e.g. ``'J/kgK'``, ``'kJ/kgK'``.
 
-        v : str
-            Unit of specific volume, units available are
-            :code:`m^3/kg, l/kg`.
+        h / enthalpy : str
+            Unit of specific enthalpy, e.g. ``'J/kg'``, ``'kJ/kg'``.
 
-        Q : str
-            Unit of vapor mass fraction, units available are
-            :code:`-, %`.
+        vol / volume / specific_volume : str
+            Unit of specific volume, e.g. ``'m^3/kg'``, ``'l/kg'``.
+
+        Q / quality : str
+            Unit of vapour quality, e.g. ``'-'``, ``'%'``.
         """
-        for key, value in kwargs.items():
-            if value in self.converters[key].keys():
-                self.units[key] = value
-            else:
-                msg = (
-                    f'The unit {value} is not available for the  fluid '
-                    f'property {self.properties[key]} . Please choose from '
-                    f'{", ".join(self.converters[key].keys())}.'
+        if units is not None:
+            if not hasattr(units, 'default') or not isinstance(units.default, dict):
+                raise TypeError(
+                    f"'units' must be an object with a 'default' dict "
+                    f"(e.g. a tespy Units instance), got {type(units).__name__}."
                 )
-                raise ValueError(msg)
+            merged = {**units.default, **kwargs}
+        else:
+            merged = kwargs
+        self.units.set_defaults(**merged)
 
     def _draw_isoline_label(self, fig, ax, isoline, property, idx, x, y, x_min, x_max, y_min, y_max, latex_units):
         """Draw a label for an isoline.
@@ -663,8 +665,8 @@ class FluidPropertyDiagram:
 
         for key, p in isolines.items():
             iterators = [
-                ("v", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
-                ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
+                ("vol", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
+                ("vol", np.geomspace(self.v_intermediate, self.v_max, 100))
             ]
             if p <= self.p_crit:
                 try:
@@ -706,7 +708,7 @@ class FluidPropertyDiagram:
             except ValueError:
                 pass
 
-            datapoints = self._single_isoline(iterators, "v", v)
+            datapoints = self._single_isoline(iterators, "vol", v)
             mask_nan = np.isnan(datapoints["T"])
             for prop in datapoints:
                 datapoints[prop] = datapoints[prop][~mask_nan]
@@ -796,8 +798,8 @@ class FluidPropertyDiagram:
         isolines = self.enthalpy['isolines']
 
         iterators = [
-            ("v", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
-            ("v", np.geomspace(self.v_intermediate, self.v_max, 100))
+            ("vol", np.geomspace(self.v_min, self.v_intermediate, 100, endpoint=False)),
+            ("vol", np.geomspace(self.v_intermediate, self.v_max, 100))
         ]
 
         for key, h in isolines.items():
@@ -842,7 +844,7 @@ class FluidPropertyDiagram:
         data["META"] = {
             "fluid": self.fluid,
             "backend": self.backend,
-            "units": self.units,
+            "units": self.units._serialize(),
             "CoolProp-version": CP.__version__,
             "fluprodia-version": __version__
         }
@@ -852,7 +854,7 @@ class FluidPropertyDiagram:
             os.makedirs(directory)
 
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
     def calc_individual_isoline(
             self, isoline_property=None,
@@ -872,7 +874,7 @@ class FluidPropertyDiagram:
             Type of the isoline. Choose from :code:`line_type='...'`:
 
             - pressure (:code:`'p'`)
-            - specific volume (:code:`'v'`)
+            - specific volume (:code:`'vol'`)
             - temperature (:code:`'T'`)
             - enthalpy (:code:`'h'`)
             - entropy (:code:`'s'`)
@@ -896,7 +898,7 @@ class FluidPropertyDiagram:
             Dictionary holding the isoline datapoints for:
 
             - pressure (key=:code:`'p'`)
-            - specific volume (key=:code:`'v'`)
+            - specific volume (key=:code:`'vol'`)
             - temperature (key=:code:`'T'`)
             - enthalpy (key=:code:`'h'`)
             - entropy (key=:code:`'s'`)
@@ -905,6 +907,25 @@ class FluidPropertyDiagram:
         -------
         A full example can be found in the class documentation.
         """
+        _deprecated_v_props = {
+            'isoline_property': isoline_property,
+            'starting_point_property': starting_point_property,
+            'ending_point_property': ending_point_property,
+        }
+        for _attr, _val in _deprecated_v_props.items():
+            if _val == 'v':
+                warnings.warn(
+                    f"The value 'v' for {_attr} is deprecated and will be "
+                    "removed in a future release. Use 'vol' instead.",
+                    FutureWarning
+                )
+        if isoline_property == 'v':
+            isoline_property = 'vol'
+        if starting_point_property == 'v':
+            starting_point_property = 'vol'
+        if ending_point_property == 'v':
+            ending_point_property = 'vol'
+
         if not isinstance(isoline_property, str):
             msg = 'Parameter isoline_property must be specified as string!'
             raise ValueError(msg)
@@ -932,7 +953,7 @@ class FluidPropertyDiagram:
         isoline_vector = np.linspace(isoline_value, isoline_value_end, 100)
         self.state.unspecify_phase()
 
-        if isoline_property == 'v':
+        if isoline_property == 'vol':
 
             if starting_point_property == 'p':
                 pressure_start = starting_point_value
@@ -976,7 +997,7 @@ class FluidPropertyDiagram:
             iterator = [("s", np.linspace(entropy_start, entropy_end, 100))]
 
         else:
-            if starting_point_property == 'v':
+            if starting_point_property == 'vol':
                 density_start = 1 / starting_point_value
             else:
                 density_start = CP.CoolProp.PropsSI(
@@ -993,7 +1014,7 @@ class FluidPropertyDiagram:
                 # })
                 # density_start = self.state.rhomass()
 
-            if ending_point_property == 'v':
+            if ending_point_property == 'vol':
                 density_end = 1 / ending_point_value
             else:
                 density_end = CP.CoolProp.PropsSI(
@@ -1022,16 +1043,16 @@ class FluidPropertyDiagram:
                     * ( isoline_value - isoline_value_end)
                 )
 
-            iterator = [("v", 1 / np.geomspace(density_start, density_end, 100))]
+            iterator = [("vol", 1 / np.geomspace(density_start, density_end, 100))]
 
         datapoints = self._single_isoline(iterator, isoline_property, isoline_vector)
 
-        if isoline_property in ["T", "p", "v"]:
+        if isoline_property in ["T", "p", "vol"]:
             rising = False
             if iterator[0][1][0] < iterator[0][1][-1]:
                 rising = True
 
-            if iterator[0][0] == "v":
+            if iterator[0][0] == "vol":
                 rising = not rising
 
             Q_crossings = self._get_Q_crossings(datapoints, isoline_property, rising)
@@ -1046,7 +1067,7 @@ class FluidPropertyDiagram:
 
     def _single_isoline(self, iterators, isoline_property, isoline_value):
         """Calculate datapoints for a single isoline."""
-        datapoints = {'h': [], 'T': [], 'v': [], 's': [], 'p': [], 'Q': []}
+        datapoints = {'h': [], 'T': [], 'vol': [], 's': [], 'p': [], 'Q': []}
 
         num_points = sum([len(_[1]) for _ in iterators])
         if np.isscalar(isoline_value):
@@ -1128,7 +1149,7 @@ class FluidPropertyDiagram:
                 data[1] = value1 + (1 - Q1) / (Q2 - Q1) * (value2 - value1)
 
         if idx_liq.size > 1:
-            if not rising or property == 'v':
+            if not rising or property == 'vol':
                 pos = 0
                 next_point = 1
             else:
@@ -1147,7 +1168,7 @@ class FluidPropertyDiagram:
     def _insert_Q_crossings(self, datapoints, property, data):
         """Insert data of Q=0 and Q=1 crossings into specified line."""
         for Q, value in data.items():
-            if property == 'v':
+            if property == 'vol':
                 value = 1 / value
             try:
                 self.state.specify_phase(CP.iphase_twophase)
@@ -1157,7 +1178,7 @@ class FluidPropertyDiagram:
             except ValueError:
                 continue
 
-            if property == 'v':
+            if property == 'vol':
                 T = self.state.T()
                 arg_sorted = np.argsort(datapoints['T'])
                 idx = np.searchsorted(datapoints['T'], T)
@@ -1174,7 +1195,7 @@ class FluidPropertyDiagram:
                     position = np.searchsorted(-datapoints['s'], -s)
 
                 datapoints['s'] = np.insert(datapoints['s'], position, s)
-                other_props = {'v', 'T', 'h', 'p'} - {property}
+                other_props = {'vol', 'T', 'h', 'p'} - {property}
 
             datapoints[property] = np.insert(
                 datapoints[property], position, value
@@ -1183,7 +1204,7 @@ class FluidPropertyDiagram:
 
             for prop in other_props:
                 result = self.state.keyed_output(self.CoolProp_inputs[prop])
-                if prop == 'v':
+                if prop == 'vol':
                     result = 1 / result
                 datapoints[prop] = np.insert(datapoints[prop], position, result)
 
@@ -1319,7 +1340,6 @@ class FluidPropertyDiagram:
                     np.where((x >= x_min) & (x <= x_max)),
                     np.where((y >= y_min) & (y <= y_max))
                 )
-
                 if len(indices) == 0:
                     continue
 
@@ -1371,22 +1391,17 @@ class FluidPropertyDiagram:
             raise ValueError(msg)
 
     def convert_to_SI(self, value, property):
-        """Convert a value to its SI value."""
-        if property == 'T':
-            return (
-                (
-                    value + self.converters[property][self.units[property]][0]
-                ) * self.converters[property][self.units[property]][1]
-            )
-        else:
-            return value * self.converters[property][self.units[property]]
+        """Convert a value from the active unit to SI.
+
+        Delegates to :meth:`fluprodia._units.Units.to_SI`. Works on scalars
+        and NumPy arrays alike.
+        """
+        return self.units.to_SI(value, property)
 
     def convert_from_SI(self, value, property):
-        """Convert a SI value to value in respecive unit system."""
-        if property == 'T':
-            return (
-                value / self.converters[property][self.units[property]][1]
-                - self.converters[property][self.units[property]][0]
-            )
-        else:
-            return value / self.converters[property][self.units[property]]
+        """Convert a value from SI to the active unit.
+
+        Delegates to :meth:`fluprodia._units.Units.from_SI`. Works on scalars
+        and NumPy arrays alike.
+        """
+        return self.units.from_SI(value, property)
