@@ -12,6 +12,7 @@ include = [
     ".readthedocs.yml",
     "tox.ini",
     "docs/",
+    "tests",
 ]
 exclude = ["docs/_build"]
 
