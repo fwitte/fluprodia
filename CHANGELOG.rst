@@ -2,6 +2,10 @@
 Changelog
 =========
 
+v4.2 (April, 24, 2026)
+----------------------
+* Implement import function for legacy json serialization
+
 v4.1 (April, 12, 2026)
 ----------------------
 * Implement pint compatible units.

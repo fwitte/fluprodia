@@ -216,9 +216,59 @@ class FluidPropertyDiagram:
         self._setup_default_label_positioning()
 
     @classmethod
+    def _is_legacy_json(cls, data):
+        """Return True if *data* was exported by fluprodia 3.x."""
+        version_str = data.get("META", {}).get("fluprodia-version", "")
+        try:
+            major = int(version_str.split(".")[0])
+            return major == 3
+        except (ValueError, IndexError):
+            return False
+
+    @classmethod
+    def _migrate_legacy_json(cls, data):
+        """Convert the pre-v4 flat format to the current nested format.
+
+        Old format: ``{ "pressure": { "1000000.0": { "h": [...], "v": [...], ... } } }``
+        New format: ``{ "pressure": { "isolines": {0: 1e6, ...}, "isoline_data": {0: { "vol": [...], ... }} } }``
+        """
+        migrated = {}
+        for prop_name, prop_data in data.items():
+            if prop_name == "META":
+                continue
+            isolines = {}
+            isoline_data = {}
+            for i, (value_str, datapoints) in enumerate(prop_data.items()):
+                isolines[i] = float(value_str)
+                isoline_data[i] = {
+                    ("vol" if k == "v" else k): v
+                    for k, v in datapoints.items()
+                }
+            migrated[prop_name] = {"isolines": isolines, "isoline_data": isoline_data}
+
+        meta = data.get("META", {}).copy()
+        # rename 'v' -> 'vol' in the units dict so Units.from_json doesn't warn
+        if "v" in meta.get("units", {}):
+            meta["units"]["vol"] = meta["units"].pop("v")
+        migrated["META"] = meta
+        return migrated
+
+    @classmethod
     def from_json(cls, path):
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+
+        if cls._is_legacy_json(data):
+            version = data.get("META", {}).get("fluprodia-version", "unknown")
+            warnings.warn(
+                f"The JSON file was exported by an older version of fluprodia "
+                f"(detected version: {version}) and has been migrated "
+                f"automatically. Re-export with the current version to avoid "
+                f"this warning.",
+                UserWarning,
+                stacklevel=2,
+            )
+            data = cls._migrate_legacy_json(data)
 
         metadata = data["META"].copy()
         del data["META"]
@@ -1128,7 +1178,7 @@ class FluidPropertyDiagram:
                         iterator_property: value
                     })
                     success = True
-                except ValueError as e:
+                except ValueError:
                     success = False
 
                 result = np.nan

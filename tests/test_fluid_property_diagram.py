@@ -1,5 +1,6 @@
 """Unit tests for FluidPropertyDiagram."""
 import json
+import warnings
 
 import numpy as np
 import pytest
@@ -199,7 +200,7 @@ class TestJsonRoundtrip:
         d.set_unit_system(T="°C", p="bar")
         path = tmp_path / "test.json"
         d.to_json(str(path))
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         assert data["META"]["units"]["T"] == "°C"
         assert data["META"]["units"]["p"] == "bar"
@@ -236,6 +237,68 @@ class TestJsonRoundtrip:
 
         d2 = FluidPropertyDiagram.from_json(str(path))
         assert len(d2.pressure["isolines"]) == n_pressure
+
+
+# ---------------------------------------------------------------------------
+# Legacy JSON import (fluprodia 3.x flat format)
+# ---------------------------------------------------------------------------
+
+def _make_legacy_json(path, fluid="water", version="3.3"):
+    """Write a minimal v3.x-style JSON file to *path*."""
+    data = {
+        "pressure": {
+            "100000.0": {"h": [1e5, 2e5], "T": [300.0, 400.0], "v": [0.001, 0.01],
+                         "s": [100.0, 200.0], "p": [1e5, 1e5], "Q": [-1.0, -1.0]},
+            "200000.0": {"h": [1e5, 2e5], "T": [300.0, 420.0], "v": [0.0008, 0.008],
+                         "s": [90.0, 190.0], "p": [2e5, 2e5], "Q": [-1.0, -1.0]},
+        },
+        "volume": {},
+        "temperature": {},
+        "enthalpy": {},
+        "entropy": {},
+        "quality": {},
+        "META": {
+            "fluid": fluid,
+            "units": {"p": "Pa", "T": "K", "s": "J/kgK", "h": "J/kg", "v": "m^3/kg", "Q": "-"},
+            "CoolProp-version": "6.4.1",
+            "fluprodia-version": version,
+        },
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+
+
+class TestLegacyJsonImport:
+    def test_legacy_raises_user_warning(self, tmp_path):
+        path = tmp_path / "legacy.json"
+        _make_legacy_json(path)
+        with pytest.warns(UserWarning, match="3.3"):
+            FluidPropertyDiagram.from_json(str(path))
+
+    def test_legacy_isolines_migrated(self, tmp_path):
+        path = tmp_path / "legacy.json"
+        _make_legacy_json(path)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            d = FluidPropertyDiagram.from_json(str(path))
+        assert len(d.pressure["isolines"]) == 2
+        assert len(d.pressure["isoline_data"]) == 2
+
+    def test_current_format_no_warning(self, tmp_path):
+        """Loading a current-format JSON must not emit a legacy UserWarning."""
+        d = FluidPropertyDiagram("water")
+        d.calc_isolines()
+        path = tmp_path / "current.json"
+        d.to_json(str(path))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            FluidPropertyDiagram.from_json(str(path))
+        legacy_warnings = [
+            x for x in w
+            if issubclass(x.category, UserWarning)
+            and "migrated" in str(x.message)
+        ]
+        assert len(legacy_warnings) == 0
 
 
 # ---------------------------------------------------------------------------
