@@ -2,6 +2,17 @@
 Changelog
 =========
 
+v4.3 (August, 10, 2026)
+-----------------------
+* Fix a bug in :code:`set_isolines_subcritical` for fluids with a melting line
+  at moderate pressures. The log rounding of the pressure isolines could push
+  the minimal pressure below the triple point pressure. The minimal temperature
+  recomputed from that pressure then fell below the triple point temperature
+  and the subsequent dense state evaluations at maximal pressure ended up in
+  the solid region raising an error from CoolProp. The minimal temperature is
+  now clamped to the triple point temperature and the dense state evaluations
+  are clamped to the melting line temperature at maximal pressure.
+
 v4.2 (April, 24, 2026)
 ----------------------
 * Implement import function for legacy json serialization

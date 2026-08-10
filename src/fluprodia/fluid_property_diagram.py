@@ -540,10 +540,21 @@ class FluidPropertyDiagram:
 
         # this is required to include the (potentially) lower pressure compared
         # to the minimum temperature. The quality isolines are calculated over
-        # temperature
-        self.T_min = CP.CoolProp.PropsSI("T", "P", self.p_min, "Q", 1, self.fluid_string)
+        # temperature. The log rounding of the pressure isolines can push p_min
+        # below the triple point pressure; clamp the saturation lookup to keep
+        # T_min in the valid fluid region
+        self.T_min = CP.CoolProp.PropsSI(
+            "T", "P", max(self.p_min, self.p_trip), "Q", 1, self.fluid_string
+        )
 
-        v_min = 1 / CP.CoolProp.PropsSI("D", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        # at p_max the melting line can lie above T_min (e.g. for water or
+        # CO2); clamp the dense state evaluations to the fluid region
+        T_min_dense = self.T_min
+        if self.state.has_melting_line():
+            T_melt = self.state.melting_line(CP.iT, CP.iP, self.p_max)
+            T_min_dense = max(T_min_dense, T_melt)
+
+        v_min = 1 / CP.CoolProp.PropsSI("D", "T", T_min_dense, "P", self.p_max, self.fluid_string)
         v_max = 1 / CP.CoolProp.PropsSI("D", "T", self.T_max, "P", self.p_min, self.fluid_string)
         self.v_min = v_min
         self.v_max = v_max
@@ -553,9 +564,9 @@ class FluidPropertyDiagram:
             i: value for i, value in enumerate(isovalues)
         }
 
-        s_min =  CP.CoolProp.PropsSI("S", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        s_min =  CP.CoolProp.PropsSI("S", "T", T_min_dense, "P", self.p_max, self.fluid_string)
         s_max =  CP.CoolProp.PropsSI("S", "T", self.T_max, "P", self.p_min, self.fluid_string)
-        h_min =  CP.CoolProp.PropsSI("H", "T", self.T_min, "P", self.p_max, self.fluid_string)
+        h_min =  CP.CoolProp.PropsSI("H", "T", T_min_dense, "P", self.p_max, self.fluid_string)
         h_max =  CP.CoolProp.PropsSI("H", "T", self.T_max, "P", self.p_min, self.fluid_string)
 
         isovalues = _linear_range(s_min, s_max)

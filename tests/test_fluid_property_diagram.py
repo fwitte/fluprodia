@@ -323,3 +323,32 @@ class TestSupportedDiagrams:
                 x_min=0, x_max=1, y_min=0, y_max=1
             )
         plt.close(fig)
+
+
+class TestSubcriticalIsolinesSolidRegion:
+    """Regression tests for isoline creation near the solid region.
+
+    The log rounding of the pressure isolines can push p_min below the
+    triple point pressure. The saturation temperature lookup at that
+    pressure then returns a value below the triple point temperature and
+    the subsequent dense state evaluations at (T_min, p_max) can end up
+    below the melting line (which lies above T_min at high pressures for
+    fluids like water or CO2).
+    """
+
+    def test_water_default_range(self):
+        diagram = FluidPropertyDiagram("water")
+        diagram.set_isolines_subcritical(253.15, 473.15)
+        # T_min is recomputed from the rounded p_min, but must stay in
+        # the valid fluid region (>= triple point temperature)
+        assert diagram.T_min >= 273.16 - 1e-9
+
+    def test_water_range_above_triple_point(self):
+        diagram = FluidPropertyDiagram("water")
+        diagram.set_isolines_subcritical(278.15, 623.15)
+        assert diagram.T_min >= 273.16 - 1e-9
+
+    def test_co2_low_temperature_range(self):
+        diagram = FluidPropertyDiagram("CO2")
+        diagram.set_isolines_subcritical(223.15, 293.15)
+        assert diagram.T_min >= 216.59 - 1e-9
