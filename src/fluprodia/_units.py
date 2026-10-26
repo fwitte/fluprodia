@@ -33,8 +33,7 @@ _UNIT_ALIASES = {
 _LONG_KEY_MAP = {
     "pressure": "p",
     "temperature": "T",
-    "volume": "vol",
-    "specific_volume": "vol",    # tespy key
+    "specific_volume": "vol",
     "enthalpy": "h",
     "entropy": "s",
     "quality": "Q",
@@ -52,12 +51,12 @@ class Units:
 
     Parameters are set via :meth:`set_defaults`.
 
-    Long-form property names (``pressure``, ``temperature``, ``volume``,
-    ``enthalpy``, ``entropy``, ``quality``) are accepted alongside the short
-    forms (``p``, ``T``, ``vol``, ``h``, ``s``, ``Q``).  tespy-style names
-    such as ``specific_volume`` are also recognised.  Unknown keys are
-    silently skipped, so a tespy :class:`tespy.tools.units.Units` object's
-    ``default`` dictionary can be passed directly without pre-filtering.
+    Long-form property names (``pressure``, ``temperature``,
+    ``specific_volume``, ``enthalpy``, ``entropy``, ``quality``) are accepted
+    alongside the short forms (``p``, ``T``, ``vol``, ``h``, ``s``, ``Q``).
+    Unknown keys are silently skipped, so a tespy
+    :class:`tespy.tools.units.Units` object's ``default`` dictionary can be
+    passed directly without pre-filtering.
 
     Example
     -------
@@ -132,12 +131,12 @@ class Units:
         """Set the active unit for one or more fluid properties.
 
         Both short-form keys (``p``, ``T``, ``vol``, ``h``, ``s``, ``Q``) and
-        long-form keys (``pressure``, ``temperature``, ``volume``,
-        ``enthalpy``, ``entropy``, ``quality``) are accepted.  tespy-style
-        names (``specific_volume``, ``vapor_mass_fraction``) are recognised as
-        well.  Keys that do not correspond to any fluprodia property are
-        silently skipped, so a tespy ``Units.default`` dictionary can be
-        unpacked here without pre-filtering.
+        long-form keys (``pressure``, ``temperature``, ``specific_volume``,
+        ``enthalpy``, ``entropy``, ``quality``) are accepted.  The tespy-style
+        name ``vapor_mass_fraction`` is recognised as well.  Keys that do not
+        correspond to any fluprodia property are silently skipped, so a tespy
+        ``Units.default`` dictionary can be unpacked here without
+        pre-filtering.
 
         Parameters
         ----------
@@ -149,7 +148,7 @@ class Units:
             Unit of specific entropy, e.g. ``'J/kgK'``, ``'kJ/kgK'``.
         h / enthalpy : str
             Unit of specific enthalpy, e.g. ``'J/kg'``, ``'kJ/kg'``.
-        vol / volume / specific_volume : str
+        vol / specific_volume : str
             Unit of specific volume, e.g. ``'m^3/kg'``, ``'l/kg'``.
         Q / quality : str
             Unit of vapour quality, e.g. ``'-'``, ``'%'``.
@@ -164,6 +163,15 @@ class Units:
                 FutureWarning
             )
             kwargs['vol'] = kwargs.pop('v')
+
+        if 'volume' in kwargs:
+            warnings.warn(
+                "The key 'volume' for specific volume is deprecated and will "
+                "be removed in a future release. Use 'specific_volume' or "
+                "'vol' instead.",
+                FutureWarning
+            )
+            kwargs['vol'] = kwargs.pop('volume')
 
         # Normalise long-form / tespy-style keys to short internal keys.
         # Keys that map to nothing in fluprodia are silently skipped.

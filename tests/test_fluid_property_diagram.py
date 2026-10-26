@@ -91,6 +91,21 @@ class TestUnitSystemIntegration:
         assert d.units["p"] == "MPa"
         assert d.units["T"] == "kelvin"
 
+    def test_set_unit_system_tespy_units_absolute_volume_ignored(self):
+        """tespy's absolute 'volume' must not be mapped to specific volume."""
+        class FakeTespyUnits:
+            default = {"volume": "m3", "specific_volume": "l/kg"}
+
+        d = FluidPropertyDiagram("water")
+        d.set_unit_system(FakeTespyUnits())
+        assert d.units["vol"] == "l/kg"
+
+    def test_set_unit_system_volume_key_deprecated(self):
+        d = FluidPropertyDiagram("water")
+        with pytest.warns(FutureWarning, match="volume"):
+            d.set_unit_system(volume="l/kg")
+        assert d.units["vol"] == "l/kg"
+
     def test_set_unit_system_invalid_units_arg_raises(self):
         d = FluidPropertyDiagram("water")
         with pytest.raises(TypeError, match="default"):

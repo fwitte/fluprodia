@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v4.4 (October, 26, 2026)
+------------------------
+* Absolute :code:`volume` units passed from a tespy :code:`Units` object are
+  now ignored instead of being interpreted as specific volume, which raised an
+  error. Specific volume is taken from tespy's :code:`specific_volume`.
+* The long-form key :code:`volume` for specific volume is deprecated and will
+  be removed in version 5.0. Use :code:`specific_volume` or :code:`vol`
+  instead.
+
 v4.3 (August, 10, 2026)
 -----------------------
 * Fix a bug in :code:`set_isolines_subcritical` for fluids with a melting line

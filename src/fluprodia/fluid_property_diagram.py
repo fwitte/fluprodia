@@ -612,14 +612,14 @@ class FluidPropertyDiagram:
         property is accepted.
 
         Both short-form keys (``p``, ``T``, ``vol``, ``h``, ``s``, ``Q``) and
-        long-form keys (``pressure``, ``temperature``, ``volume``,
+        long-form keys (``pressure``, ``temperature``, ``specific_volume``,
         ``enthalpy``, ``entropy``, ``quality``) are supported.
 
         A :class:`tespy.tools.units.Units` instance (or any object with a
         ``default`` attribute that is a plain ``dict``) may be passed as the
         first positional argument.  Keyword arguments are merged on top and
         take precedence.  tespy properties that have no fluprodia equivalent
-        (e.g. ``mass_flow``, ``power``) are silently ignored.
+        (e.g. ``mass_flow``, ``power``, ``volume``) are silently ignored.
 
         Parameters
         ----------
@@ -640,7 +640,7 @@ class FluidPropertyDiagram:
         h / enthalpy : str
             Unit of specific enthalpy, e.g. ``'J/kg'``, ``'kJ/kg'``.
 
-        vol / volume / specific_volume : str
+        vol / specific_volume : str
             Unit of specific volume, e.g. ``'m^3/kg'``, ``'l/kg'``.
 
         Q / quality : str
@@ -652,10 +652,12 @@ class FluidPropertyDiagram:
                     f"'units' must be an object with a 'default' dict "
                     f"(e.g. a tespy Units instance), got {type(units).__name__}."
                 )
+            # tespy's 'volume' is an absolute volume, specific volume is
+            # passed as 'specific_volume'
             units = {
                 key: value
                 for key, value in units.default.items()
-                if key is not None
+                if key is not None and key != 'volume'
             }
             merged = {**units, **kwargs}
         else:

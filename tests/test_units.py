@@ -128,9 +128,15 @@ class TestLongFormKeys:
         u.set_defaults(entropy="kJ/kgK")
         assert u.default["s"] == "kJ/kgK"
 
-    def test_long_form_volume(self):
+    def test_long_form_specific_volume(self):
         u = Units()
-        u.set_defaults(volume="l/kg")
+        u.set_defaults(specific_volume="l/kg")
+        assert u.default["vol"] == "l/kg"
+
+    def test_long_form_volume_deprecated(self):
+        u = Units()
+        with pytest.warns(FutureWarning, match="volume"):
+            u.set_defaults(volume="l/kg")
         assert u.default["vol"] == "l/kg"
 
     def test_long_form_quality(self):
